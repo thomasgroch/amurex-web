@@ -2,7 +2,6 @@ import OpenAI from "openai";
 import { OpenAIStream, StreamingTextResponse } from "ai";
 
 // Create an OpenAI API client (that's edge friendly!)
-process.env.OPENAI_API_KEY = "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";
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || "",
 });
@@ -30,7 +29,7 @@ export async function POST(req) {
             "You are an AI writing assistant that continues existing text based on context from prior text. " +
             "Give more weight/priority to the later characters than the beginning ones. " +
             "Limit your response to no more than 200 characters, but make sure to construct complete sentences." +
-            "Do not generate empty responses."
+            "Do not generate empty responses.",
           // we're disabling markdown for now until we can figure out a way to stream markdown text with proper formatting: https://github.com/steven-tey/novel/discussions/7
           // "Use Markdown formatting when appropriate.",
         },
@@ -50,7 +49,7 @@ export async function POST(req) {
     const stream = OpenAIStream(response, {
       onCompletion: (completion) => {
         if (!completion.trim()) {
-          throw new Error('Empty response generated');
+          throw new Error("Empty response generated");
         }
       },
     });
@@ -59,7 +58,9 @@ export async function POST(req) {
 
     return new StreamingTextResponse(stream);
   } catch (error) {
-    console.error('Error in generate API:', error);
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 });
+    console.error("Error in generate API:", error);
+    return new Response(JSON.stringify({ error: error.message }), {
+      status: 500,
+    });
   }
 }

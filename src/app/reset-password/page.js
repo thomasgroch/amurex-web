@@ -65,7 +65,10 @@ export default function ResetPassword() {
 
           <hr className="mb-6 border-gray-800" />
 
-          <form onSubmit={handleSendResetEmail} className="space-y-4 md:space-y-6">
+          <form
+            onSubmit={handleSendResetEmail}
+            className="space-y-4 md:space-y-6"
+          >
             <div>
               <label className="block text-sm font-medium font-semibold text-white mb-1">
                 Email
@@ -100,7 +103,10 @@ export default function ResetPassword() {
 
           <p className="mt-4 md:mt-6 text-center text-xs md:text-sm text-gray-400">
             Remember your password?{" "}
-            <Link href="/signin" className="text-white font-light hover:underline">
+            <Link
+              href="/signin"
+              className="text-white font-light hover:underline"
+            >
               Sign In
             </Link>
           </p>

@@ -20,6 +20,8 @@ const PROVIDER_ICONS = {
   notion: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Notion-logo.svg/2048px-Notion-logo.svg.png"
 };
 
+const BASE_URL_BACKEND = "https://api.amurex.ai";
+
 function SettingsContent() {
   const [activeTab, setActiveTab] = useState('personalization');
   const [loading, setLoading] = useState(false);
@@ -420,6 +422,24 @@ function SettingsContent() {
     }
   }, [searchParams, handleGoogleCallback]);
 
+  const logUserAction = async (userId, eventType) => {
+    try {
+      await fetch(`${BASE_URL_BACKEND}/track`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({ 
+          uuid: userId, 
+          event_type: eventType
+        }),
+      });
+    } catch (error) {
+      console.error("Error tracking:", error);
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-black text-white">
       {/* Left App Navbar - the thin one */}
@@ -685,7 +705,11 @@ function SettingsContent() {
                         <Button 
                           variant="outline" 
                           className="relative bg-zinc-900/50 text-zinc-300 hover:bg-zinc-800 hover:border-[#9334E9] border border-zinc-800 rounded-md backdrop-blur-sm transition-colors duration-200"
-                          onClick={() => router.push('/chat')}
+                          onClick={async () => {
+                            console.log("clicked");
+                            await logUserAction("not-required", 'web_memory_chat_tried');
+                            router.push('/chat');
+                          }}
                         >
                           Try Now
                         </Button>

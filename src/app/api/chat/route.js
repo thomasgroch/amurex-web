@@ -25,31 +25,45 @@ async function sendPayload(content, user_id) {
 }
 // 4. Rephrase input using GPT
 async function rephraseInput(inputString) {
-  const gptAnswer = await openai.chat.completions.create({
-    model: "gpt-4",
-    messages: [
-      {
-        role: "system",
-        content:
-          "You are a rephraser and always respond with a rephrased version of the input that is given to a search engine API. Always be succint and use the same words as the input.",
-      },
-      { role: "user", content: inputString },
-    ],
-  });
-  return gptAnswer.choices[0].message.content;
+  console.log("inputString", inputString);
+//   const gptAnswer = await openai.chat.completions.create({
+//     model: "gpt-4",
+//     messages: [
+//       {
+//         role: "system",
+//         content:
+//           "You are a rephraser and always respond with a rephrased version of the input that is given to a search engine API. Always be succint and use the same words as the input.",
+//       },
+//       { role: "user", content: inputString },
+//     ],
+//   });
+//   return gptAnswer.choices[0].message.content;
+// }
+
+// async function searchMemory(queryEmbedding, user_id) {
+//   const { data: chunks, error } = await supabase.rpc(
+//     "fafsearch_one",
+//     {
+//       query_embedding: queryEmbedding,
+//       input_user_id: user_id,
+//     }
+//   );
+
+//   if (error) throw error;
+//   return chunks;
 }
 
 async function searchMemory(queryEmbedding, user_id) {
-  const { data: chunks, error } = await supabase.rpc(
-    "fafsearch_one",
-    {
-      query_embedding: queryEmbedding,
-      input_user_id: user_id,
-    }
-  );
+    const { data: chunks, error } = await supabase.rpc(
+      "fafsearch_one",
+      {
+        query_embedding: queryEmbedding,
+        input_user_id: user_id,
+      }
+    );
 
-  if (error) throw error;
-  return chunks;
+    if (error) throw error;
+    return chunks;
 }
 
 async function searchDocuments(queryEmbedding, user_id, enabledSources) {
@@ -58,6 +72,7 @@ async function searchDocuments(queryEmbedding, user_id, enabledSources) {
     {
       query_embedding: queryEmbedding,
       input_user_id: user_id,
+      input_types: enabledSources
     }
   );
 
@@ -275,9 +290,44 @@ async function generateFollowup(message) {
   // 53. Return the content of the chat completion
   return chatCompletion.choices[0].message.content;
 }
-// 54. Define POST function for API endpoint
-export async function POST(req, res) {
-  const { message, user_id, googleDocsEnabled, notionEnabled, memorySearchEnabled } = await req.json();
+
+// Add this new function near the other helper functions
+async function generatePrompts(documents) {
+  const gptResponse = await openai.chat.completions.create({
+    model: "gpt-4o",
+    messages: [
+      {
+        role: "system",
+        content: "You are a prompt generator. Given document titles and content, generate 3 interesting and specific questions that would help users explore their knowledge. Make the prompts engaging and focused on extracting key insights from the documents. Return only a JSON array of 3 strings. The JSON should be formatted as a JSON object with a 'prompts' key. Here's an example: { 'prompts': ['Question 1', 'Question 2', 'Question 3'] }. Keep the prompts super short and concise. One of the prompts should ask to write an email or any interesting action not just questions.",
+      },
+      {
+        role: "user",
+        content: `Generate 3 prompts based on these documents: ${JSON.stringify(documents)}`,
+      },
+    ],
+    response_format: { type: "json_object" }
+  });
+
+  return JSON.parse(gptResponse.choices[0].message.content);
+}
+
+// Modify the POST function to handle both chat and prompts endpoints
+export async function POST(req) {
+  const body = await req.json();
+  
+  // Handle prompts generation
+  if (body.type === 'prompts') {
+    try {
+      const prompts = await generatePrompts(body.documents);
+      return Response.json({ prompts });
+    } catch (error) {
+      console.error('Error generating prompts:', error);
+      return Response.json({ error: 'Failed to generate prompts' }, { status: 500 });
+    }
+  }
+  
+  // Original chat functionality continues here...
+  const { message, user_id, googleDocsEnabled, notionEnabled, memorySearchEnabled, obsidianEnabled } = body;
 
   if (!user_id) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -291,6 +341,7 @@ export async function POST(req, res) {
     const enabledSources = [
       ...(googleDocsEnabled ? ['google_docs'] : []),
       ...(notionEnabled ? ['notion'] : []),
+      ...(obsidianEnabled ? ['obsidian'] : []),
       ...(memorySearchEnabled ? ['memory'] : [])
     ];
 
@@ -321,7 +372,7 @@ export async function POST(req, res) {
     // Get all relevant sources based on enabled types
     const [memoryChunks, documentChunks] = await Promise.all([
       enabledSources.includes('memory') ? searchMemory(queryEmbedding, user_id) : [],
-      enabledSources.some(source => ['google_docs', 'notion'].includes(source)) 
+      enabledSources.some(source => ['google_docs', 'notion', 'obsidian'].includes(source)) 
         ? searchDocuments(queryEmbedding, user_id, enabledSources.filter(source => source !== 'memory'))
         : []
     ]);
@@ -344,19 +395,21 @@ export async function POST(req, res) {
         url: item.meeting_id ? `/meetings/${item.meeting_id}` : null
       })),
       ...documentChunks.map(doc => ({
+        id: doc.id,
         text: doc.selected_chunks?.join('\n') || '',
         title: doc.title,
         url: doc.url,
         type: doc.type
       }))
     ];
+    
+    // console.log("documentChunks", documentChunks);
 
     // Create streaming response
     const stream = new TransformStream();
     const writer = stream.writable.getWriter();
     const encoder = new TextEncoder();
 
-    console.log("documentChunks", documentChunks);
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
       messages: [
@@ -370,7 +423,7 @@ export async function POST(req, res) {
           
                   Retrieved chunks from online conversations: ${JSON.stringify(formattedChunks)}
           
-                  Retrieved chunks from Google Docs (from files): ${JSON.stringify(documentChunks.map(doc => ({
+                  Retrieved chunks from documents (from files): ${JSON.stringify(documentChunks.map(doc => ({
             title: doc.title,
             content: doc.selected_chunks
           })))}`,
@@ -382,6 +435,8 @@ export async function POST(req, res) {
     // Process the stream
     (async () => {
       try {
+        let fullGPTResponse = ''; // Track complete GPT response
+
         // Send sources first
         const sourcesPayload = JSON.stringify({
           success: true,
@@ -393,6 +448,7 @@ export async function POST(req, res) {
         for await (const chunk of completion) {
           const content = chunk.choices[0]?.delta?.content || '';
           if (content) {
+            fullGPTResponse += content; // Accumulate the response
             const payload = JSON.stringify({
               success: true,
               chunk: content,
@@ -400,6 +456,13 @@ export async function POST(req, res) {
             await writer.write(encoder.encode(payload + '\n'));
           }
         }
+
+        await supabase.from('sessions').insert({
+          user_id: user_id,
+          query: message,
+          response: fullGPTResponse,
+          sources: sources,
+        });
 
         // Send final message
         const finalPayload = JSON.stringify({

@@ -26,6 +26,14 @@
 
 Amurex Web is the web interface for Amurex, providing a powerful search engine across all your knowledge. Built with Next.js, it enables fast retrieval of past meetings, notes, and documents, ensuring seamless access to your information.
 
+## Demo
+
+
+
+https://github.com/user-attachments/assets/050bf888-18f8-414d-b1ad-7f8e2f8fced7
+
+
+
 ## Features
 
 • Universal Search – Instantly find past meetings, notes, and documents.

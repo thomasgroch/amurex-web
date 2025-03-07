@@ -28,11 +28,11 @@ Amurex Web is the web interface for Amurex, providing a powerful search engine a
 
 ## Features
 
-🔍 Universal Search – Instantly find past meetings, notes, and documents.
+• Universal Search – Instantly find past meetings, notes, and documents.
 
-📅 Meeting Hub – View and manage past meetings with rich context.
+• Meeting Hub – View and manage past meetings with rich context.
 
-🚀 Optimized for Speed – Built with Supabase and OpenAI for efficient retrieval.
+• Optimized for Speed – Built upon our SOTA retrieval algorithm called FAFSeach.
 
 ## Prerequisites
 

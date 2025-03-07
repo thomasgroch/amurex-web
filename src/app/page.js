@@ -35,7 +35,7 @@ export default function HomePage() {
 
   useEffect(() => {
     // Redirect to /meetings when the component mounts
-    router.push('/meetings');
+    router.push('/chat');
   }, [router]);
 
 

@@ -185,7 +185,7 @@ export default function SharedTranscriptDetail({ params }) {
               onClick={() => {
                 const link = document.createElement("a");
                 link.target = "_blank";
-                link.href = isLoggedIn ? "/meetings" : "/web_app/signin";
+                link.href = isLoggedIn ? "/chat" : "/web_app/signin";
                 document.body.appendChild(link);
                 link.click();
                 document.body.removeChild(link);

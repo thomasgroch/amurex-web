@@ -103,7 +103,7 @@ export default function SignUp() {
       }
 
       // Redirect to the original URL if it exists, otherwise to /meetings
-      router.push(redirectUrl || "/meetings");
+      router.push(redirectUrl || "/chat");
     } else {
       setMessage("An unexpected error occurred. Please try again.");
     }

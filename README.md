@@ -1,5 +1,7 @@
 <div align="center">
-  <img src="https://github.com/thepersonalaicompany/amurex/raw/main/assets/ogimage.jpg" alt="Amurex Logo" width="800" />
+  <img src="https://github.com/user-attachments/assets/c859ce85-3a20-40ea-9cae-fab5f34988da" alt="Amurex Logo" width="800" />
+
+
   <h2>Amurex Web</h2>
 
   <p>

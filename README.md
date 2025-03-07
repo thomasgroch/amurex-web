@@ -24,7 +24,15 @@
 
 ## Amurex Web
 
-This is the web interface for the Amurex project. It serves as the web app for viewing and managing previous meetings, built with Next.js.
+Amurex Web is the web interface for Amurex, providing a powerful search engine across all your knowledge. Built with Next.js, it enables fast retrieval of past meetings, notes, and documents, ensuring seamless access to your information.
+
+## Features
+
+🔍 Universal Search – Instantly find past meetings, notes, and documents.
+
+📅 Meeting Hub – View and manage past meetings with rich context.
+
+🚀 Optimized for Speed – Built with Supabase and OpenAI for efficient retrieval.
 
 ## Prerequisites
 
@@ -59,6 +67,7 @@ npm install  # or yarn install or pnpm install
 ```
 
 2. Run the development server:
+
 
 ```
 npm run dev  # or yarn dev or pnpm dev

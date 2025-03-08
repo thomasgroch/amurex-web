@@ -457,12 +457,21 @@ export async function POST(req) {
           }
         }
 
-        await supabase.from('sessions').insert({
-          user_id: user_id,
-          query: message,
-          response: fullGPTResponse,
-          sources: sources,
-        });
+        // fetch the user's table and find if "memory_enabled" is true
+        const { data: user, error } = await supabase.from('users').select('memory_enabled').eq('id', user_id).single();
+        console.log("user", user);
+        if (user.memory_enabled) {
+          // fetch the user's memory table and find if "memory_enabled" is true
+            await supabase.from('sessions').insert({
+              user_id: user_id,
+              query: message,
+              response: fullGPTResponse,
+              sources: sources,
+            });
+        } else {
+          console.log("Memory is not enabled for this user", error);
+        }
+
 
         // Send final message
         const finalPayload = JSON.stringify({

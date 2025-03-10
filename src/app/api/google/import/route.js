@@ -165,7 +165,7 @@ async function processGoogleDocs(session, supabase) {
     const response = await drive.files.list({
       q: "mimeType='application/vnd.google-apps.document'",
       fields: "files(id, name, modifiedTime, mimeType)",
-      pageSize: 10,
+      pageSize: 30,
     });
 
     const textSplitter = new RecursiveCharacterTextSplitter({

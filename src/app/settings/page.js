@@ -997,7 +997,9 @@ function SettingsContent() {
                             />
                             <div>
                               <h3 className="font-medium text-white text-lg">Connect Google</h3>
-                              <p className="text-sm text-zinc-400">You might be warned by Google that this app is not secure.<br></br> We are still early stage and the app is under review. <br></br>Please ignore this and continue.</p>
+                              <p className="text-sm text-zinc-400">
+                                Sync your Google Docs
+                              </p>
                             </div>
                           </div>
                           <Button

@@ -1111,6 +1111,8 @@ const OnboardingFlow = ({ onClose, setHasSeenOnboarding }) => {
         }
       }
       
+      // Also set in localStorage for redundancy
+      localStorage.setItem('hasSeenOnboarding', 'true');
       setHasSeenOnboarding(true);
       onClose();
     } catch (error) {
@@ -1123,17 +1125,16 @@ const OnboardingFlow = ({ onClose, setHasSeenOnboarding }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#09090A] rounded-lg border border-zinc-800 max-w-4xl w-full p-6 relative">
-        <button 
-          onClick={handleClose} 
-          className="absolute top-4 right-4 text-zinc-500 hover:text-white"
+      <div className="absolute top-4 right-20 z-50">
+        <button
+          onClick={handleClose}
+          className="px-5 py-2.5 bg-[#1E1E24] text-zinc-300 hover:text-white hover:bg-[#2A2A36] rounded-lg border border-zinc-700 transition-colors font-medium shadow-lg"
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
+          Skip for now
         </button>
-        
+      </div>
+      
+      <div className="bg-[#09090A] rounded-lg border border-zinc-800 max-w-4xl w-full p-6 relative">
         <h2 className="text-2xl font-bold text-white mb-6">Welcome to Amurex!</h2>
         
         <p className="text-zinc-300 mb-6">
@@ -1200,15 +1201,6 @@ const OnboardingFlow = ({ onClose, setHasSeenOnboarding }) => {
               Upload Obsidian
             </a>
           </div>
-        </div>
-        
-        <div className="flex justify-center">
-          <button
-            onClick={handleClose}
-            className="px-6 py-2 text-zinc-400 hover:text-white transition-colors"
-          >
-            Skip for now
-          </button>
         </div>
       </div>
     </div>

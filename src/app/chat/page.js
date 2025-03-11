@@ -1123,7 +1123,7 @@ const OnboardingFlow = ({ onClose, setHasSeenOnboarding }) => {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#09090A] rounded-lg border border-zinc-800 max-w-2xl w-full p-6 relative">
+      <div className="bg-[#09090A] rounded-lg border border-zinc-800 max-w-4xl w-full p-6 relative">
         <button 
           onClick={handleClose} 
           className="absolute top-4 right-4 text-zinc-500 hover:text-white"
@@ -1140,7 +1140,7 @@ const OnboardingFlow = ({ onClose, setHasSeenOnboarding }) => {
           To get the most out of Amurex, connect your accounts to access your documents and information.
         </p>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-black rounded-lg p-6 border border-zinc-800">
             <div className="flex items-center gap-3 mb-4">
               <img
@@ -1178,6 +1178,26 @@ const OnboardingFlow = ({ onClose, setHasSeenOnboarding }) => {
               className="inline-flex items-center justify-center w-full px-4 py-2 bg-[#9334E9] text-white rounded-lg hover:bg-[#7928CA] transition-colors"
             >
               Connect Notion
+            </a>
+          </div>
+          
+          <div className="bg-black rounded-lg p-6 border border-zinc-800">
+            <div className="flex items-center gap-3 mb-4">
+              <img
+                src="https://obsidian.md/images/obsidian-logo-gradient.svg"
+                alt="Obsidian"
+                className="w-8 h-8"
+              />
+              <h3 className="text-xl font-medium text-white">Obsidian</h3>
+            </div>
+            <p className="text-zinc-400 mb-4">
+              Upload your Obsidian vault to search through your notes.
+            </p>
+            <a
+              href="/settings?tab=personalization"
+              className="inline-flex items-center justify-center w-full px-4 py-2 bg-[#9334E9] text-white rounded-lg hover:bg-[#7928CA] transition-colors"
+            >
+              Upload Obsidian
             </a>
           </div>
         </div>

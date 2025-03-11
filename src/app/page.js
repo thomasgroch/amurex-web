@@ -11,7 +11,6 @@ import { supabase } from '@/lib/supabaseClient';
 import FocusedEditor from '@/components/FocusedEditor';
 import { Loader } from '@/components/Loader';
 import localFont from 'next/font/local';
-import { IntegrationsModal } from '@/components/IntegrationsModal';
 import { Navbar } from '@/components/Navbar';
 
 const louizeFont = localFont({
@@ -309,13 +308,6 @@ export default function HomePage() {
         <div className="fixed inset-0 bg-white z-50 flex flex-col p-8">
           <FocusedEditor onSave={handleSaveFocusNote} onClose={handleCloseFocusMode} />
         </div>
-      )}
-      {showIntegrationsPopup && (
-        <IntegrationsModal
-          onClose={() => setShowIntegrationsPopup(false)}
-          onConnectNotion={handleNotionConnect}
-          onConnectGoogle={handleGoogleDocsConnect}
-        />
       )}
     </div>
     </>

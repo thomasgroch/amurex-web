@@ -1128,7 +1128,7 @@ const OnboardingFlow = ({ onClose, setHasSeenOnboarding }) => {
       <div className="absolute top-4 right-20 z-50">
         <button
           onClick={handleClose}
-          className="px-5 py-2.5 bg-[#1E1E24] text-zinc-300 hover:text-white hover:bg-[#2A2A36] rounded-lg border border-zinc-700 transition-colors font-medium shadow-lg"
+          className="hidden px-5 py-2.5 bg-[#1E1E24] text-zinc-300 hover:text-white hover:bg-[#2A2A36] rounded-lg border border-zinc-700 transition-colors font-medium shadow-lg"
         >
           Skip for now
         </button>

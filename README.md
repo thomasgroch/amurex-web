@@ -1,6 +1,5 @@
 <div align="center">
-  <img src="https://github.com/user-attachments/assets/c859ce85-3a20-40ea-9cae-fab5f34988da" alt="Amurex Logo" width="800" />
-
+  <img src="https://github.com/user-attachments/assets/5ceec814-a0e5-45c4-84a9-9001000ff3c5" alt="Amurex Logo" width="800" />
 
   <h2>Amurex Web</h2>
 

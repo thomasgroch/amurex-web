@@ -12,7 +12,10 @@ export const ImportCompleteEmailGoogle = ({ documents }) => {
           <li key={index}>{doc.title}</li>
         ))}
       </ul>
-      <p>You can now access these documents in your Amurex workspace.</p>
+      <p>
+        You can now access these documents in your Amurex workspace at{" "}
+        <a href="https://app.amurex.ai/chat">app.amurex.ai/chat</a>
+      </p>
     </div>
   );
 };
@@ -27,7 +30,10 @@ export const ImportCompleteEmailNotion = ({ documents }) => {
           <li key={index}>{doc.title}</li>
         ))}
       </ul>
-      <p>You can now access these documents in your Amurex workspace.</p>
+      <p>
+        You can now access these documents in your Amurex workspace at{" "}
+        <a href="https://app.amurex.ai/chat">app.amurex.ai/chat</a>
+      </p>
     </div>
   );
 };
@@ -42,7 +48,10 @@ export const ImportCompleteEmailObsidian = ({ documents }) => {
           <li key={index}>{doc.title}</li>
         ))}
       </ul>
-      <p>You can now access these documents in your Amurex workspace.</p>
+      <p>
+        You can now access these documents in your Amurex workspace at{" "}
+        <a href="https://app.amurex.ai/chat">app.amurex.ai/chat</a>
+      </p>
     </div>
   );
 };

@@ -16,7 +16,7 @@ import { Navbar } from "@/components/Navbar";
 import StarButton from "@/components/star-button";
 import { useRouter } from "next/navigation";
 
-const BASE_URL_BACKEND = "https://api.amurex.ai"
+const BASE_URL_BACKEND = "https://api.amurex.ai";
 
 // 3. Home component
 export default function AISearch() {
@@ -122,20 +122,22 @@ export default function AISearch() {
   // Replace the existing useEffect for hasSeenOnboarding
   useEffect(() => {
     const checkOnboardingStatus = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (session) {
         const { data, error } = await supabase
           .from("users")
           .select("hasSeenChatOnboarding")
           .eq("id", session.user.id)
           .single();
-        
+
         if (data) {
           setHasSeenOnboarding(!!data.hasSeenChatOnboarding);
         }
       }
     };
-    
+
     checkOnboardingStatus();
   }, []);
 
@@ -193,7 +195,7 @@ export default function AISearch() {
       .eq("type", "obsidian")
       .limit(1)
       .then(({ data }) => setHasObsidian(!!data?.length));
-    
+
     // Helper function to check if onboarding should be shown
     const checkOnboarding = (google, notion) => {
       if (!google && !notion && !hasSeenOnboarding) {
@@ -345,8 +347,8 @@ export default function AISearch() {
           <StarButton />
         </div>
         {showOnboarding && (
-          <OnboardingFlow 
-            onClose={() => setShowOnboarding(false)} 
+          <OnboardingFlow
+            onClose={() => setShowOnboarding(false)}
             setHasSeenOnboarding={setHasSeenOnboarding}
           />
         )}
@@ -355,14 +357,26 @@ export default function AISearch() {
             <div className="bg-[#1E1E24] rounded-lg border border-zinc-800 p-4 mb-4 flex flex-col md:flex-row items-center justify-between">
               <div className="flex items-center gap-3 mb-3 md:mb-0">
                 <div className="bg-[#9334E9] rounded-full p-2">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-white">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="text-white"
+                  >
                     <circle cx="12" cy="12" r="10"></circle>
                     <line x1="12" y1="8" x2="12" y2="12"></line>
                     <line x1="12" y1="16" x2="12.01" y2="16"></line>
                   </svg>
                 </div>
                 <p className="text-zinc-300">
-                  Connect your Google Docs or Notion to get the most out of Amurex
+                  Connect your Google Docs or Notion to get the most out of
+                  Amurex
                 </p>
               </div>
               <a
@@ -617,7 +631,7 @@ export default function AISearch() {
                         <>
                           {/* Regular prompts */}
                           {suggestedPrompts
-                            .filter(item => item.type === 'prompt')
+                            .filter((item) => item.type === "prompt")
                             .map((item, index) => (
                               <button
                                 key={index}
@@ -632,7 +646,7 @@ export default function AISearch() {
                             ))}
                           {/* Email actions */}
                           {suggestedPrompts
-                            .filter(item => item.type === 'email')
+                            .filter((item) => item.type === "email")
                             .map((item, index) => (
                               <button
                                 key={index}
@@ -710,7 +724,9 @@ export function InputArea({
 }
 /* 21. Query component for displaying content */
 export const Query = ({ content = "" }) => {
-  return <div className="text-xl md:text-3xl font-medium text-white">{content}</div>;
+  return (
+    <div className="text-xl md:text-3xl font-medium text-white">{content}</div>
+  );
 };
 /* 22. Sources component for displaying list of sources */
 export const Sources = ({ content = [] }) => {
@@ -898,9 +914,11 @@ export const Heading = ({ content = "" }) => {
 
 // Move these utility functions outside of any component
 const fetchSession = async () => {
-  const { data: { session } } = await supabase.auth.getSession();
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
   if (!session) {
-    router.push('/web_app/signin');
+    router.push("/web_app/signin");
     return null;
   }
   return session;
@@ -910,9 +928,9 @@ const logUserAction = async (userId, eventType) => {
   try {
     // First check if memory_enabled is true for this user
     const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('memory_enabled')
-      .eq('id', userId)
+      .from("users")
+      .select("memory_enabled")
+      .eq("id", userId)
       .single();
 
     if (userError) {
@@ -946,27 +964,33 @@ const GPT = ({ content = "" }) => {
   const [showEmailButton, setShowEmailButton] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
   const contentRef = useRef(null);
-  
+
   useEffect(() => {
     // Reset states when content changes
     setShowEmailButton(false);
     setIsComplete(false);
-    
+
     // Check if it's an email response
-    if (content.toLowerCase().includes('subject:') || content.toLowerCase().includes('dear ')) {
+    if (
+      content.toLowerCase().includes("subject:") ||
+      content.toLowerCase().includes("dear ")
+    ) {
       setShowEmailButton(true);
     }
 
     // Auto-scroll as content is generated
     if (contentRef.current) {
-      contentRef.current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      contentRef.current.scrollIntoView({
+        behavior: "smooth",
+        block: "nearest",
+      });
     }
   }, [content]);
 
   // Set complete when the streaming is done
   useEffect(() => {
     const timer = setTimeout(() => {
-      if (!content.endsWith('▋')) {
+      if (!content.endsWith("▋")) {
         setIsComplete(true);
       }
     }, 1000);
@@ -977,20 +1001,20 @@ const GPT = ({ content = "" }) => {
   const openGmail = async () => {
     // In any component:
     const session = await fetchSession();
-    await logUserAction(session.user.id, 'web_open_email_in_gmail');
+    await logUserAction(session.user.id, "web_open_email_in_gmail");
 
     const cleanContent = content
-      .replace(/\*\*/g, '')
-      .replace(/\*/g, '')
-      .replace(/\n\n+/g, '\n\n')
-      .replace(/\n/g, '%0A')
-      .replace(/\s+/g, ' ')
+      .replace(/\*\*/g, "")
+      .replace(/\*/g, "")
+      .replace(/\n\n+/g, "\n\n")
+      .replace(/\n/g, "%0A")
+      .replace(/\s+/g, " ")
       .trim()
-      .replace(/%0A\s+/g, '%0A')
-      .replace(/%0A%0A+/g, '%0A%0A');
+      .replace(/%0A\s+/g, "%0A")
+      .replace(/%0A%0A+/g, "%0A%0A");
 
     const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&body=${cleanContent}`;
-    window.open(gmailUrl, '_blank');
+    window.open(gmailUrl, "_blank");
   };
 
   return (
@@ -1006,13 +1030,17 @@ const GPT = ({ content = "" }) => {
       >
         {content}
       </ReactMarkdown>
-      
+
       {showEmailButton && isComplete && (
         <button
           onClick={openGmail}
           className="mt-4 px-4 py-2 rounded-lg bg-[#9334E9] text-white hover:bg-[#7928CA] transition-colors flex items-center gap-2"
         >
-          <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Gmail_icon_%282020%29.svg/2560px-Gmail_icon_%282020%29.svg.png" alt="Gmail" className="h-4" />
+          <img
+            src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Gmail_icon_%282020%29.svg/2560px-Gmail_icon_%282020%29.svg.png"
+            alt="Gmail"
+            className="h-4"
+          />
           Open in Gmail
         </button>
       )}
@@ -1098,21 +1126,23 @@ MessageHandler.displayName = "MessageHandler";
 const OnboardingFlow = ({ onClose, setHasSeenOnboarding }) => {
   const handleClose = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (session) {
         // Update the user record in the database
         const { error } = await supabase
           .from("users")
           .update({ hasSeenChatOnboarding: true })
           .eq("id", session.user.id);
-          
+
         if (error) {
           console.error("Error updating hasSeenChatOnboarding:", error);
         }
       }
-      
+
       // Also set in localStorage for redundancy
-      localStorage.setItem('hasSeenOnboarding', 'true');
+      localStorage.setItem("hasSeenOnboarding", "true");
       setHasSeenOnboarding(true);
       onClose();
     } catch (error) {
@@ -1128,19 +1158,22 @@ const OnboardingFlow = ({ onClose, setHasSeenOnboarding }) => {
       <div className="absolute top-4 right-20 z-50">
         <button
           onClick={handleClose}
-          className="hidden px-5 py-2.5 bg-[#1E1E24] text-zinc-300 hover:text-white hover:bg-[#2A2A36] rounded-lg border border-zinc-700 transition-colors font-medium shadow-lg"
+          className="px-5 py-2.5 bg-[#1E1E24] text-zinc-300 hover:text-white hover:bg-[#2A2A36] rounded-lg border border-zinc-700 transition-colors font-medium shadow-lg"
         >
           Skip for now
         </button>
       </div>
-      
+
       <div className="bg-[#09090A] rounded-lg border border-zinc-800 max-w-4xl w-full p-6 relative">
-        <h2 className="text-2xl font-bold text-white mb-6">Welcome to Amurex!</h2>
-        
+        <h2 className="text-2xl font-bold text-white mb-6">
+          Welcome to Amurex!
+        </h2>
+
         <p className="text-zinc-300 mb-6">
-          To get the most out of Amurex, connect your accounts to access your documents and information.
+          To get the most out of Amurex, connect your accounts to access your
+          documents and information.
         </p>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <div className="bg-black rounded-lg p-6 border border-zinc-800">
             <div className="flex items-center gap-3 mb-4">
@@ -1152,7 +1185,8 @@ const OnboardingFlow = ({ onClose, setHasSeenOnboarding }) => {
               <h3 className="text-xl font-medium text-white">Google Docs</h3>
             </div>
             <p className="text-zinc-400 mb-4">
-              Connect your Google account to search and reference your documents.
+              Connect your Google account to search and reference your
+              documents.
             </p>
             <a
               href="/settings?tab=personalization"
@@ -1161,7 +1195,7 @@ const OnboardingFlow = ({ onClose, setHasSeenOnboarding }) => {
               Connect Google
             </a>
           </div>
-          
+
           <div className="bg-black rounded-lg p-6 border border-zinc-800">
             <div className="flex items-center gap-3 mb-4">
               <img
@@ -1181,7 +1215,7 @@ const OnboardingFlow = ({ onClose, setHasSeenOnboarding }) => {
               Connect Notion
             </a>
           </div>
-          
+
           <div className="bg-black rounded-lg p-6 border border-zinc-800">
             <div className="flex items-center gap-3 mb-4">
               <img
@@ -1206,4 +1240,3 @@ const OnboardingFlow = ({ onClose, setHasSeenOnboarding }) => {
     </div>
   );
 };
-

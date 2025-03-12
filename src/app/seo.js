@@ -10,7 +10,7 @@ export const defaultSEOConfig = {
     description: "Your AI copilot for work and life",
     images: [
       {
-        url: "/og2.jpg", // You'll need to add this image to your public folder
+        url: "/og_amurex.jpg", // You'll need to add this image to your public folder
         width: 1200,
         height: 630,
         alt: "Amurex Open Graph Image",
@@ -21,8 +21,9 @@ export const defaultSEOConfig = {
     handle: "@thepersonalaico",
     site: "@thepersonalaico",
     cardType: "summary_large_image",
-    images: ['/og2.jpg'],
+    images: ["/og_amurex.jpg"],
     title: "Amurex - Your AI copilot for work and life",
     description: "Your AI copilot for work and life",
   },
-}; 
+};
+

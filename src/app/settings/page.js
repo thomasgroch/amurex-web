@@ -9,16 +9,31 @@ import { supabase } from "@/lib/supabaseClient";
 import { Button } from "@/components/ui/Button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
-import { MessageSquare, FileText, Cloud, Github, Bug, LogOut, Video, Calendar, Pencil, UserPlus, Plus, Minus } from 'lucide-react';
-import Cookies from 'js-cookie';
+import {
+  MessageSquare,
+  FileText,
+  Cloud,
+  Github,
+  Bug,
+  LogOut,
+  Video,
+  Calendar,
+  Pencil,
+  UserPlus,
+  Plus,
+  Minus,
+} from "lucide-react";
+import Cookies from "js-cookie";
 import { X } from "@phosphor-icons/react";
 import { Navbar } from "@/components/Navbar";
 import { toast } from "react-hot-toast";
 
 const PROVIDER_ICONS = {
-  google: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/768px-Google_%22G%22_logo.svg.png",
-  notion: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Notion-logo.svg/2048px-Notion-logo.svg.png",
-  obsidian: "https://obsidian.md/images/obsidian-logo-gradient.svg"
+  google:
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/768px-Google_%22G%22_logo.svg.png",
+  notion:
+    "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Notion-logo.svg/2048px-Notion-logo.svg.png",
+  obsidian: "https://obsidian.md/images/obsidian-logo-gradient.svg",
 };
 
 const BASE_URL_BACKEND = "https://api.amurex.ai";
@@ -39,22 +54,22 @@ function SettingsContent() {
   const [emailNotificationsEnabled, setEmailNotificationsEnabled] =
     useState(false);
   const [showSignOutConfirm, setShowSignOutConfirm] = useState(false);
-  const [teamName, setTeamName] = useState('');
-  const [teamLocation, setTeamLocation] = useState('');
+  const [teamName, setTeamName] = useState("");
+  const [teamLocation, setTeamLocation] = useState("");
   const [editingField, setEditingField] = useState(null);
-  const [editedName, setEditedName] = useState('');
-  const [editedLocation, setEditedLocation] = useState('');
-  const [teamCreatedAt, setTeamCreatedAt] = useState('');
+  const [editedName, setEditedName] = useState("");
+  const [editedLocation, setEditedLocation] = useState("");
+  const [teamCreatedAt, setTeamCreatedAt] = useState("");
   const [teamMembers, setTeamMembers] = useState([]);
   const [membersLoading, setMembersLoading] = useState(true);
   const [currentUserRole, setCurrentUserRole] = useState(null);
   const [editingMemberId, setEditingMemberId] = useState(null);
-  const [editedRole, setEditedRole] = useState('');
+  const [editedRole, setEditedRole] = useState("");
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-  const [emailInput, setEmailInput] = useState('');
+  const [emailInput, setEmailInput] = useState("");
   const [emails, setEmails] = useState([]);
-  const [teamInviteCode, setTeamInviteCode] = useState('');
-  const [copyButtonText, setCopyButtonText] = useState('Copy URL');
+  const [teamInviteCode, setTeamInviteCode] = useState("");
+  const [copyButtonText, setCopyButtonText] = useState("Copy URL");
   const [isMobile, setIsMobile] = useState(false);
   const [isObsidianModalOpen, setIsObsidianModalOpen] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -75,7 +90,9 @@ function SettingsContent() {
       }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
       // Redirect if session is terminated
       if (!session) {
@@ -528,45 +545,47 @@ function SettingsContent() {
 
   const handleSave = async (field) => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) return;
 
       // Get team_id from team_members
       const { data: teamMember, error: memberError } = await supabase
-        .from('team_members')
-        .select('team_id')
-        .eq('user_id', session.user.id)
+        .from("team_members")
+        .select("team_id")
+        .eq("user_id", session.user.id)
         .single();
 
       if (memberError) throw memberError;
 
       const updateData = {};
-      if (field === 'name') {
+      if (field === "name") {
         updateData.team_name = editedName;
-      } else if (field === 'location') {
+      } else if (field === "location") {
         updateData.location = editedLocation;
       }
 
       const { error } = await supabase
-        .from('teams')
+        .from("teams")
         .update(updateData)
-        .eq('id', teamMember.team_id);
+        .eq("id", teamMember.team_id);
 
       if (error) throw error;
 
-      if (field === 'name') setTeamName(editedName);
-      if (field === 'location') setTeamLocation(editedLocation);
+      if (field === "name") setTeamName(editedName);
+      if (field === "location") setTeamLocation(editedLocation);
       setEditingField(null);
-      toast.success('Team updated successfully');
+      toast.success("Team updated successfully");
     } catch (error) {
-      console.error('Error updating team:', error);
-      toast.error('Failed to update team');
+      console.error("Error updating team:", error);
+      toast.error("Failed to update team");
     }
   };
 
   const getInitials = (fullName, email) => {
     if (fullName) {
-      const names = fullName.split(' ');
+      const names = fullName.split(" ");
       if (names.length >= 2) {
         return `${names[0][0]}${names[names.length - 1][0]}`.toUpperCase();
       }
@@ -578,21 +597,23 @@ function SettingsContent() {
   const handleRoleUpdate = async (memberId) => {
     try {
       const { error } = await supabase
-        .from('team_members')
+        .from("team_members")
         .update({ role: editedRole })
-        .eq('id', memberId);
+        .eq("id", memberId);
 
       if (error) throw error;
 
-      setTeamMembers(members => members.map(member => 
-        member.id === memberId ? { ...member, role: editedRole } : member
-      ));
-      
+      setTeamMembers((members) =>
+        members.map((member) =>
+          member.id === memberId ? { ...member, role: editedRole } : member
+        )
+      );
+
       setEditingMemberId(null);
-      toast.success('Member role updated successfully');
+      toast.success("Member role updated successfully");
     } catch (error) {
-      console.error('Error updating member role:', error);
-      toast.error('Failed to update member role');
+      console.error("Error updating member role:", error);
+      toast.error("Failed to update member role");
     }
   };
 
@@ -600,13 +621,16 @@ function SettingsContent() {
   useEffect(() => {
     const fetchTeamDetails = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
         if (!session) return;
 
         // First get the team membership
         const { data: teamMember, error: memberError } = await supabase
-          .from('team_members')
-          .select(`
+          .from("team_members")
+          .select(
+            `
             id,
             role,
             team_id,
@@ -616,8 +640,9 @@ function SettingsContent() {
               location,
               created_at
             )
-          `)
-          .eq('user_id', session.user.id)
+          `
+          )
+          .eq("user_id", session.user.id)
           .single();
 
         if (memberError) throw memberError;
@@ -626,19 +651,22 @@ function SettingsContent() {
           const team = teamMember.teams;
           setTeamName(team.team_name);
           setEditedName(team.team_name);
-          setTeamLocation(team.location || '');
-          setEditedLocation(team.location || '');
-          setTeamCreatedAt(new Date(team.created_at).toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-          }));
+          setTeamLocation(team.location || "");
+          setEditedLocation(team.location || "");
+          setTeamCreatedAt(
+            new Date(team.created_at).toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            })
+          );
           setCurrentUserRole(teamMember.role);
 
           // Fetch team members
           const { data: members, error: membersError } = await supabase
-            .from('team_members')
-            .select(`
+            .from("team_members")
+            .select(
+              `
               id,
               role,
               created_at,
@@ -647,15 +675,16 @@ function SettingsContent() {
                 id,
                 email
               )
-            `)
-            .eq('team_id', team.id);
+            `
+            )
+            .eq("team_id", team.id);
 
           if (membersError) throw membersError;
           setTeamMembers(members);
         }
       } catch (error) {
-        console.error('Error fetching team details:', error);
-        toast.error('Failed to load team details');
+        console.error("Error fetching team details:", error);
+        toast.error("Failed to load team details");
       } finally {
         setMembersLoading(false);
       }
@@ -670,7 +699,7 @@ function SettingsContent() {
   };
 
   const handleEmailInputKeyDown = (e) => {
-    if (e.key === 'Enter' && emailInput.trim()) {
+    if (e.key === "Enter" && emailInput.trim()) {
       addEmail();
     }
   };
@@ -678,9 +707,9 @@ function SettingsContent() {
   const addEmail = () => {
     if (emailInput.trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailInput)) {
       setEmails([...emails, emailInput.trim()]);
-      setEmailInput('');
+      setEmailInput("");
     } else {
-      toast.error('Please enter a valid email address');
+      toast.error("Please enter a valid email address");
     }
   };
 
@@ -690,53 +719,57 @@ function SettingsContent() {
 
   const handleCopyInviteLink = async () => {
     try {
-      await navigator.clipboard.writeText(`${window.location.host}/teams/join/${teamInviteCode}`);
-      setCopyButtonText('Copied!');
-      setTimeout(() => setCopyButtonText('Copy URL'), 2000);
+      await navigator.clipboard.writeText(
+        `${window.location.host}/teams/join/${teamInviteCode}`
+      );
+      setCopyButtonText("Copied!");
+      setTimeout(() => setCopyButtonText("Copy URL"), 2000);
     } catch (err) {
-      console.error('Failed to copy:', err);
-      toast.error('Failed to copy link');
+      console.error("Failed to copy:", err);
+      toast.error("Failed to copy link");
     }
   };
 
   const sendInvites = async () => {
     try {
-      const { data: { session } } = await supabase.auth.getSession();
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       if (!session) return;
 
       // Get team_id from team_members
       const { data: teamMember, error: memberError } = await supabase
-        .from('team_members')
-        .select('team_id')
-        .eq('user_id', session.user.id)
+        .from("team_members")
+        .select("team_id")
+        .eq("user_id", session.user.id)
         .single();
 
       if (memberError) throw memberError;
 
       // Send invites
-      const response = await fetch('/api/teams/invite', {
-        method: 'POST',
+      const response = await fetch("/api/teams/invite", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           teamId: teamMember.team_id,
-          emails: emails
+          emails: emails,
         }),
       });
 
       const data = await response.json();
 
       if (data.success) {
-        toast.success('Invites sent successfully!');
+        toast.success("Invites sent successfully!");
         setEmails([]);
         setIsInviteModalOpen(false);
       } else {
-        throw new Error(data.error || 'Failed to send invites');
+        throw new Error(data.error || "Failed to send invites");
       }
     } catch (error) {
-      console.error('Error sending invites:', error);
-      toast.error('Failed to send invites');
+      console.error("Error sending invites:", error);
+      toast.error("Failed to send invites");
     }
   };
 
@@ -749,28 +782,30 @@ function SettingsContent() {
   useEffect(() => {
     const fetchTeamInviteCode = async () => {
       try {
-        const { data: { session } } = await supabase.auth.getSession();
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
         if (!session) return;
 
         const { data: teamMember, error: memberError } = await supabase
-          .from('team_members')
-          .select('team_id')
-          .eq('user_id', session.user.id)
+          .from("team_members")
+          .select("team_id")
+          .eq("user_id", session.user.id)
           .single();
 
         if (memberError) throw memberError;
 
         const { data: team, error: teamError } = await supabase
-          .from('teams')
-          .select('invite_code')
-          .eq('id', teamMember.team_id)
+          .from("teams")
+          .select("invite_code")
+          .eq("id", teamMember.team_id)
           .single();
 
         if (teamError) throw teamError;
 
         setTeamInviteCode(team.invite_code);
       } catch (error) {
-        console.error('Error fetching team invite code:', error);
+        console.error("Error fetching team invite code:", error);
       }
     };
 
@@ -779,8 +814,9 @@ function SettingsContent() {
 
   // Update the handleFileSelect function
   const handleFileSelect = (e) => {
-    const files = Array.from(e.target?.files || e.dataTransfer?.files || [])
-      .filter(file => file.name.endsWith('.md'));
+    const files = Array.from(
+      e.target?.files || e.dataTransfer?.files || []
+    ).filter((file) => file.name.endsWith(".md"));
     setSelectedFiles(files);
   };
 
@@ -788,19 +824,19 @@ function SettingsContent() {
   const handleDragOver = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    e.currentTarget.classList.add('border-[#9334E9]');
+    e.currentTarget.classList.add("border-[#9334E9]");
   };
 
   const handleDragLeave = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    e.currentTarget.classList.remove('border-[#9334E9]');
+    e.currentTarget.classList.remove("border-[#9334E9]");
   };
 
   const handleDrop = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    e.currentTarget.classList.remove('border-[#9334E9]');
+    e.currentTarget.classList.remove("border-[#9334E9]");
     handleFileSelect(e);
   };
 
@@ -812,36 +848,38 @@ function SettingsContent() {
     setUploadProgress(0);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error('No session found');
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+      if (!session) throw new Error("No session found");
 
       for (let i = 0; i < selectedFiles.length; i++) {
         const file = selectedFiles[i];
         const content = await file.text();
 
-        const response = await fetch('/api/obsidian/upload', {
-          method: 'POST',
+        const response = await fetch("/api/obsidian/upload", {
+          method: "POST",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
           },
           body: JSON.stringify({
             fileName: file.name,
             content: content,
-            userId: session.user.id
+            userId: session.user.id,
           }),
         });
 
-        if (!response.ok) throw new Error('Upload failed');
+        if (!response.ok) throw new Error("Upload failed");
 
         setUploadProgress(((i + 1) / selectedFiles.length) * 100);
       }
 
-      toast.success('Markdown files uploaded successfully!');
+      toast.success("Markdown files uploaded successfully!");
       setIsObsidianModalOpen(false);
       setSelectedFiles([]);
     } catch (error) {
-      console.error('Error uploading files:', error);
-      toast.error('Failed to upload files');
+      console.error("Error uploading files:", error);
+      toast.error("Failed to upload files");
     } finally {
       setIsUploading(false);
       setUploadProgress(0);
@@ -851,7 +889,7 @@ function SettingsContent() {
   useEffect(() => {
     // Get tab from URL query parameter
     const params = new URLSearchParams(window.location.search);
-    const tab = params.get('tab');
+    const tab = params.get("tab");
     if (tab) {
       setActiveTab(tab);
     } else {
@@ -880,7 +918,7 @@ function SettingsContent() {
           <h2 className="text-2xl font-medium text-white mb-6">Settings</h2>
           <div className="text-md space-y-2">
             <button
-              onClick={() => handleTabChange('personalization')}
+              onClick={() => handleTabChange("personalization")}
               className={`w-full text-left px-4 py-2 rounded-lg ${
                 activeTab === "personalization"
                   ? "bg-zinc-800 text-white"
@@ -890,7 +928,7 @@ function SettingsContent() {
               Personalization
             </button>
             <button
-              onClick={() => handleTabChange('account')}
+              onClick={() => handleTabChange("account")}
               className={`w-full text-left px-4 py-2 rounded-lg ${
                 activeTab === "account"
                   ? "bg-zinc-800 text-white"
@@ -900,15 +938,17 @@ function SettingsContent() {
               Account
             </button>
             <button
-              onClick={() => handleTabChange('team')}
+              onClick={() => handleTabChange("team")}
               className={`w-full text-left px-4 py-2 rounded-lg hidden ${
-                activeTab === 'team' ? 'bg-zinc-800 text-white' : 'text-zinc-400 hover:bg-zinc-800'
+                activeTab === "team"
+                  ? "bg-zinc-800 text-white"
+                  : "text-zinc-400 hover:bg-zinc-800"
               }`}
             >
               Team
             </button>
             <button
-              onClick={() => handleTabChange('feedback')}
+              onClick={() => handleTabChange("feedback")}
               className={`w-full text-left px-4 py-2 rounded-lg ${
                 activeTab === "feedback"
                   ? "bg-zinc-800 text-white"
@@ -933,19 +973,26 @@ function SettingsContent() {
                     <div className="flex items-center gap-4">
                       <MessageSquare className="w-6 h-6 text-[#9334E9]" />
                       <div>
-                        <h3 className="font-medium text-white text-lg">Memory Chat (new!)</h3>
-                        <p className="text-sm text-zinc-400">Try our new memory chat feature</p>
+                        <h3 className="font-medium text-white text-lg">
+                          Memory Chat (new!)
+                        </h3>
+                        <p className="text-sm text-zinc-400">
+                          Try our new memory chat feature
+                        </p>
                       </div>
                     </div>
                     <div className="relative">
                       <div className="absolute -inset-0.5 bg-gradient-to-r from-[#9334E9] to-[#9334E9] rounded-lg blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-gradient-x"></div>
-                      <Button 
-                        variant="outline" 
+                      <Button
+                        variant="outline"
                         className="relative bg-zinc-900/50 text-zinc-300 hover:bg-zinc-800 hover:border-[#9334E9] border border-zinc-800 rounded-md backdrop-blur-sm transition-colors duration-200"
                         onClick={async () => {
                           console.log("clicked");
-                          await logUserAction("not-required", 'web_memory_chat_tried');
-                          router.push('/chat');
+                          await logUserAction(
+                            "not-required",
+                            "web_memory_chat_tried"
+                          );
+                          router.push("/chat");
                         }}
                       >
                         Try Now
@@ -957,7 +1004,7 @@ function SettingsContent() {
             </div>
           </div>
 
-          {activeTab === 'personalization' && (
+          {activeTab === "personalization" && (
             <div className="space-y-8">
               <h1 className="text-2xl font-medium text-white">
                 Personalization
@@ -996,7 +1043,9 @@ function SettingsContent() {
                               className="w-6 h-6"
                             />
                             <div>
-                              <h3 className="font-medium text-white text-lg">Connect Google</h3>
+                              <h3 className="font-medium text-white text-lg">
+                                Connect Google
+                              </h3>
                               <p className="text-sm text-zinc-400">
                                 Sync your Google Docs
                               </p>
@@ -1078,18 +1127,22 @@ function SettingsContent() {
                       <CardContent className="p-4">
                         <div className="flex items-center justify-between">
                           <div className="flex items-center gap-4">
-                            <img 
-                              src={PROVIDER_ICONS.obsidian} 
-                              alt="Obsidian" 
+                            <img
+                              src={PROVIDER_ICONS.obsidian}
+                              alt="Obsidian"
                               className="w-6 h-6"
                             />
                             <div>
-                              <h3 className="font-medium text-white text-lg">Upload from Obsidian</h3>
-                              <p className="text-sm text-zinc-400">Import your markdown files</p>
+                              <h3 className="font-medium text-white text-lg">
+                                Upload from Obsidian
+                              </h3>
+                              <p className="text-sm text-zinc-400">
+                                Import your markdown files
+                              </p>
                             </div>
                           </div>
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             className="bg-zinc-900 text-zinc-300 hover:bg-zinc-800 border-zinc-800 min-w-[100px]"
                             onClick={() => setIsObsidianModalOpen(true)}
                           >
@@ -1107,14 +1160,23 @@ function SettingsContent() {
                               <Plus className="w-4 h-4 text-zinc-400" />
                             </div>
                             <div>
-                              <h3 className="font-medium text-white text-lg">Request Integration</h3>
-                              <p className="text-sm text-zinc-400">Suggest the next integration</p>
+                              <h3 className="font-medium text-white text-lg">
+                                Request Integration
+                              </h3>
+                              <p className="text-sm text-zinc-400">
+                                Suggest the next integration
+                              </p>
                             </div>
                           </div>
-                          <Button 
-                            variant="outline" 
+                          <Button
+                            variant="outline"
                             className="bg-zinc-900 text-zinc-300 hover:bg-zinc-800 border-zinc-800 min-w-[100px]"
-                            onClick={() => window.open('https://github.com/thepersonalaicompany/amurex/issues/new', '_blank')}
+                            onClick={() =>
+                              window.open(
+                                "https://github.com/thepersonalaicompany/amurex-web/issues/new",
+                                "_blank"
+                              )
+                            }
                           >
                             Request
                           </Button>
@@ -1122,8 +1184,6 @@ function SettingsContent() {
                       </CardContent>
                     </Card>
                   </div>
-
-                  
                 </CardContent>
               </Card>
             </div>
@@ -1196,11 +1256,13 @@ function SettingsContent() {
               </div>
             </>
           )}
-          {activeTab === 'team' && (
+          {activeTab === "team" && (
             <>
               <div className="space-y-2">
-                <h1 className="text-2xl font-medium text-white">Team Settings</h1>
-                
+                <h1 className="text-2xl font-medium text-white">
+                  Team Settings
+                </h1>
+
                 <Card className="bg-black border-zinc-800">
                   <CardContent className="p-6">
                     <div className="space-y-6">
@@ -1208,18 +1270,18 @@ function SettingsContent() {
                         <div>
                           <div className="flex items-center justify-between">
                             <h3 className="text-md text-zinc-400">Team Name</h3>
-                            {editingField === 'name' ? (
+                            {editingField === "name" ? (
                               <div className="flex gap-2">
                                 <Button
                                   size="sm"
-                                  onClick={() => handleSave('name')}
+                                  onClick={() => handleSave("name")}
                                   className="mt-2 px-2 py-2 inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium border border-white/10 bg-zinc-800 text-white hover:bg-zinc-700"
                                 >
                                   Cancel
                                 </Button>
                                 <Button
                                   size="sm"
-                                  onClick={() => handleSave('name')}
+                                  onClick={() => handleSave("name")}
                                   className="mt-2 px-2 py-2 inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium border border-white/10 !bg-[#9334E9] text-[#FAFAFA] hover:!bg-[#3c1671]"
                                 >
                                   Save
@@ -1228,14 +1290,14 @@ function SettingsContent() {
                             ) : (
                               <Button
                                 size="sm"
-                                onClick={() => setEditingField('name')}
+                                onClick={() => setEditingField("name")}
                                 className="mt-2 lg:px-4 lg:py-2 px-2 py-2 inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium border border-white/10 !bg-[#9334E9] text-[#FAFAFA] cursor-pointer transition-all duration-200 whitespace-nowrap hover:!bg-[#3c1671] hover:border-[#6D28D9]"
                               >
                                 <Pencil className="h-4 w-4" />
                               </Button>
                             )}
                           </div>
-                          {editingField === 'name' ? (
+                          {editingField === "name" ? (
                             <input
                               type="text"
                               value={editedName}
@@ -1250,18 +1312,18 @@ function SettingsContent() {
                         <div>
                           <div className="flex items-center justify-between">
                             <h3 className="text-md text-zinc-400">Location</h3>
-                            {editingField === 'location' ? (
+                            {editingField === "location" ? (
                               <div className="flex gap-2">
                                 <Button
                                   size="sm"
-                                  onClick={() => handleSave('location')}
+                                  onClick={() => handleSave("location")}
                                   className="mt-2 px-2 py-2 inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium border border-white/10 bg-zinc-800 text-white hover:bg-zinc-700"
                                 >
                                   Cancel
                                 </Button>
                                 <Button
                                   size="sm"
-                                  onClick={() => handleSave('location')}
+                                  onClick={() => handleSave("location")}
                                   className="mt-2 px-2 py-2 inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium border border-white/10 !bg-[#9334E9] text-[#FAFAFA] hover:!bg-[#3c1671]"
                                 >
                                   Save
@@ -1270,18 +1332,20 @@ function SettingsContent() {
                             ) : (
                               <Button
                                 size="sm"
-                                onClick={() => setEditingField('location')}
+                                onClick={() => setEditingField("location")}
                                 className="mt-2 lg:px-4 lg:py-2 px-2 py-2 inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium border border-white/10 !bg-[#9334E9] text-[#FAFAFA] cursor-pointer transition-all duration-200 whitespace-nowrap hover:!bg-[#3c1671] hover:border-[#6D28D9]"
                               >
                                 <Pencil className="h-4 w-4" />
                               </Button>
                             )}
                           </div>
-                          {editingField === 'location' ? (
+                          {editingField === "location" ? (
                             <input
                               type="text"
                               value={editedLocation}
-                              onChange={(e) => setEditedLocation(e.target.value)}
+                              onChange={(e) =>
+                                setEditedLocation(e.target.value)
+                              }
                               className="mt-1 w-full bg-zinc-900 border border-zinc-700 rounded-md px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-[#9334E9] focus:border-transparent"
                             />
                           ) : (
@@ -1290,7 +1354,9 @@ function SettingsContent() {
                         </div>
 
                         <div>
-                          <h3 className="text-md text-zinc-400">Created Date</h3>
+                          <h3 className="text-md text-zinc-400">
+                            Created Date
+                          </h3>
                           <p className="text-white">{teamCreatedAt}</p>
                         </div>
                       </div>
@@ -1310,7 +1376,7 @@ function SettingsContent() {
                     Invite Members
                   </Button>
                 </div>
-                
+
                 <Card className="bg-black border-zinc-800">
                   <CardContent className="p-6">
                     {membersLoading ? (
@@ -1320,8 +1386,8 @@ function SettingsContent() {
                     ) : (
                       <div className="space-y-6">
                         {teamMembers.map((member) => (
-                          <div 
-                            key={member.id} 
+                          <div
+                            key={member.id}
                             className="flex items-center justify-between border-b border-zinc-800 pb-4 last:border-0 last:pb-0"
                           >
                             <div className="flex items-center gap-4">
@@ -1330,33 +1396,41 @@ function SettingsContent() {
                               </div>
                               <div>
                                 <p className="text-white font-medium">
-                                  {member.name || member.users?.email} <b>({member.users?.email || member.name})</b>
+                                  {member.name || member.users?.email}{" "}
+                                  <b>({member.users?.email || member.name})</b>
                                 </p>
                                 <div className="flex items-center gap-2 text-sm text-zinc-400">
                                   {editingMemberId === member.id ? (
                                     <select
                                       value={editedRole}
-                                      onChange={(e) => setEditedRole(e.target.value)}
+                                      onChange={(e) =>
+                                        setEditedRole(e.target.value)
+                                      }
                                       className="bg-zinc-800 border border-zinc-700 rounded px-2 py-1 text-white"
                                     >
                                       <option value="owner">Owner</option>
                                       <option value="member">Member</option>
                                     </select>
                                   ) : (
-                                    <span className="capitalize">{member.role}</span>
+                                    <span className="capitalize">
+                                      {member.role}
+                                    </span>
                                   )}
                                   <span>•</span>
                                   <span>
-                                    Joined {new Date(member.created_at).toLocaleDateString('en-US', {
-                                      year: 'numeric',
-                                      month: 'long',
-                                      day: 'numeric'
+                                    Joined{" "}
+                                    {new Date(
+                                      member.created_at
+                                    ).toLocaleDateString("en-US", {
+                                      year: "numeric",
+                                      month: "long",
+                                      day: "numeric",
                                     })}
                                   </span>
                                 </div>
                               </div>
                             </div>
-                            {currentUserRole === 'owner' && (
+                            {currentUserRole === "owner" && (
                               <div className="flex gap-2">
                                 {editingMemberId === member.id ? (
                                   <>
@@ -1369,7 +1443,9 @@ function SettingsContent() {
                                     </Button>
                                     <Button
                                       size="sm"
-                                      onClick={() => handleRoleUpdate(member.id)}
+                                      onClick={() =>
+                                        handleRoleUpdate(member.id)
+                                      }
                                       className="mt-2 px-2 py-2 inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium border border-white/10 !bg-[#9334E9] text-[#FAFAFA] hover:!bg-[#3c1671]"
                                     >
                                       Save
@@ -1400,7 +1476,7 @@ function SettingsContent() {
             </>
           )}
 
-          {activeTab === 'feedback' && (
+          {activeTab === "feedback" && (
             <div className="space-y-10">
               <h1 className="text-2xl font-medium text-white">Feedback</h1>
 
@@ -1494,17 +1570,23 @@ function SettingsContent() {
       {isInviteModalOpen && (
         <div className="px-2 fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-black bg-opacity-40 backdrop-blur-sm p-8 rounded-lg shadow-lg border border-white/20">
-            <h2 className="lg:text-xl text-md font-medium mb-4 text-white">Invite members to <b>{teamName}</b></h2>
-            
+            <h2 className="lg:text-xl text-md font-medium mb-4 text-white">
+              Invite members to <b>{teamName}</b>
+            </h2>
+
             <div className="mt-4">
-              <p className="text-white lg:text-md text-sm font-semibold">Send invites via email</p>
+              <p className="text-white lg:text-md text-sm font-semibold">
+                Send invites via email
+              </p>
               <div className="flex items-center">
                 <input
                   type="text"
                   value={emailInput}
                   onChange={handleEmailInputChange}
                   onKeyDown={isMobile ? undefined : handleEmailInputKeyDown}
-                  placeholder={isMobile ? "Enter emails" : "Enter emails and press enter"}
+                  placeholder={
+                    isMobile ? "Enter emails" : "Enter emails and press enter"
+                  }
                   className="w-full mt-2 p-2 border rounded bg-transparent text-white text-sm lg:text-md"
                 />
                 {isMobile && (
@@ -1516,12 +1598,17 @@ function SettingsContent() {
                   </button>
                 )}
               </div>
-              
+
               {emails.length > 0 && (
                 <ul className="mt-2 text-white">
-                  <li className="font-semibold lg:text-md text-sm">New invites</li>
+                  <li className="font-semibold lg:text-md text-sm">
+                    New invites
+                  </li>
                   {emails.map((email, index) => (
-                    <li key={index} className="lg:text-md text-sm bg-[#27272A] p-2 rounded mt-1 flex justify-between items-center w-min">
+                    <li
+                      key={index}
+                      className="lg:text-md text-sm bg-[#27272A] p-2 rounded mt-1 flex justify-between items-center w-min"
+                    >
                       {email}
                       <button
                         onClick={() => removeEmail(index)}
@@ -1533,41 +1620,78 @@ function SettingsContent() {
                   ))}
                 </ul>
               )}
-              <button 
+              <button
                 className="mt-2 lg:px-4 lg:py-2 px-2 py-2 inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium border border-white/10 bg-[#9334E9] text-[#FAFAFA] cursor-pointer transition-all duration-200 whitespace-nowrap hover:bg-[#3c1671] hover:border-[#6D28D9]"
                 onClick={sendInvites}
               >
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-send">
-                  <path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z"/>
-                  <path d="m21.854 2.147-10.94 10.939"/>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="lucide lucide-send"
+                >
+                  <path d="M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z" />
+                  <path d="m21.854 2.147-10.94 10.939" />
                 </svg>
                 <span>Send Invites</span>
               </button>
             </div>
 
             <div className="mt-6">
-              <p className="text-white lg:text-md text-sm font-semibold">Or copy the invite URL</p>
+              <p className="text-white lg:text-md text-sm font-semibold">
+                Or copy the invite URL
+              </p>
               <input
                 type="text"
                 value={`${window.location.host}/teams/join/${teamInviteCode}`}
                 readOnly
                 className="w-full mt-2 p-2 border rounded bg-transparent text-white lg:text-md text-sm"
               />
-              <button 
+              <button
                 className="mt-2 lg:px-4 lg:py-2 px-2 py-2 inline-flex items-center justify-center gap-2 rounded-md text-sm font-medium border border-white/10 bg-[#9334E9] text-[#FAFAFA] cursor-pointer transition-all duration-200 whitespace-nowrap hover:bg-[#3c1671] hover:border-[#6D28D9]"
                 onClick={handleCopyInviteLink}
               >
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M8 4V16C8 17.1046 8.89543 18 10 18H18C19.1046 18 20 17.1046 20 16V7.24853C20 6.77534 19.7893 6.32459 19.4142 6.00001L16.9983 3.75735C16.6232 3.43277 16.1725 3.22205 15.6993 3.22205H10C8.89543 3.22205 8 4.11748 8 5.22205" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M16 4V7H19" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M4 8V20C4 21.1046 4.89543 22 6 22H14C15.1046 22 16 21.1046 16 20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                <svg
+                  width="20"
+                  height="20"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M8 4V16C8 17.1046 8.89543 18 10 18H18C19.1046 18 20 17.1046 20 16V7.24853C20 6.77534 19.7893 6.32459 19.4142 6.00001L16.9983 3.75735C16.6232 3.43277 16.1725 3.22205 15.6993 3.22205H10C8.89543 3.22205 8 4.11748 8 5.22205"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M16 4V7H19"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                  <path
+                    d="M4 8V20C4 21.1046 4.89543 22 6 22H14C15.1046 22 16 21.1046 16 20"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
                 </svg>
                 <span>{copyButtonText}</span>
               </button>
             </div>
 
             <div className="flex justify-end mt-6">
-              <button 
+              <button
                 className="px-4 py-2 inline-flex items-center justify-center gap-2 rounded-md text-md font-medium border border-white/10 text-[#FAFAFA] cursor-pointer transition-all duration-200 whitespace-nowrap hover:bg-[#3c1671] hover:border-[#6D28D9]"
                 onClick={() => setIsInviteModalOpen(false)}
               >
@@ -1581,8 +1705,10 @@ function SettingsContent() {
       {isObsidianModalOpen && (
         <div className="px-2 fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-black bg-opacity-40 backdrop-blur-sm p-8 rounded-lg shadow-lg border border-white/20 max-w-lg w-full">
-            <h2 className="text-xl font-medium mb-4 text-white">Upload Markdown Files</h2>
-            
+            <h2 className="text-xl font-medium mb-4 text-white">
+              Upload Markdown Files
+            </h2>
+
             <div className="mt-4">
               <input
                 type="file"
@@ -1602,16 +1728,23 @@ function SettingsContent() {
                 <div className="text-center">
                   <FileText className="w-8 h-8 text-[#9334E9] mx-auto mb-2" />
                   <p className="text-white">Click to select markdown files</p>
-                  <p className="text-sm text-zinc-400">or drag and drop them here</p>
+                  <p className="text-sm text-zinc-400">
+                    or drag and drop them here
+                  </p>
                 </div>
               </label>
 
               {selectedFiles.length > 0 && (
                 <div className="mt-4">
-                  <h3 className="text-white font-medium mb-2">Selected Files:</h3>
+                  <h3 className="text-white font-medium mb-2">
+                    Selected Files:
+                  </h3>
                   <ul className="space-y-2">
                     {selectedFiles.map((file, index) => (
-                      <li key={index} className="text-zinc-400 flex items-center">
+                      <li
+                        key={index}
+                        className="text-zinc-400 flex items-center"
+                      >
                         <FileText className="w-4 h-4 mr-2" />
                         {file.name}
                       </li>
@@ -1623,7 +1756,7 @@ function SettingsContent() {
               {isUploading && (
                 <div className="mt-4">
                   <div className="h-2 bg-zinc-800 rounded-full overflow-hidden">
-                    <div 
+                    <div
                       className="h-full bg-[#9334E9] transition-all duration-300"
                       style={{ width: `${uploadProgress}%` }}
                     />
@@ -1644,7 +1777,7 @@ function SettingsContent() {
                 >
                   Cancel
                 </button>
-                <button 
+                <button
                   onClick={handleObsidianUpload}
                   disabled={selectedFiles.length === 0 || isUploading}
                   className="mt-2 lg:px-4 lg:py-2 px-2 py-2 inline-flex items-center justify-center gap-2 rounded-sm text-sm font-medium border border-white/10 !bg-[#9334E9] text-[#FAFAFA] cursor-pointer transition-all duration-200 whitespace-nowrap hover:!bg-[#3c1671] hover:border-[#6D28D9]"

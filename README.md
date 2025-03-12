@@ -57,13 +57,38 @@ cd amurex-web
 
 Create a .env.local file in the root directory with the following variables:
 ```
+# supabase
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 SUPABASE_ANON_KEY=
 SUPABASE_URL=
+
+# opeani
 OPENAI_API_KEY=
+
+# base url
 NEXT_PUBLIC_BASE_URL=
+NEXT_PUBLIC_APP_URL=
+
+# notion
+NOTION_CLIENT_SECRET=
+NOTION_CLIENT_ID=
+NOTION_AUTH_URL=
+NOTION_REDIRECT_URI=
+
+# google
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+GOOGLE_REDIRECT_URI=
+GOOGLE_CALENDAR_REDIRECT_URI=
+
+# embeddings (using mistral now)
+MIXEDBREAD_API_KEY=
+MISTRAL_API_KEY=
+
+# resend
+RESEND_API_KEY=
 ```
 
 ### Installation

@@ -1498,7 +1498,7 @@ function SettingsContent() {
                         className="bg-zinc-800 hover:bg-zinc-700 text-white whitespace-nowrap flex items-center"
                         onClick={() =>
                           window.open(
-                            "https://github.com/thepersonalaicompany/amurex/issues/new",
+                            "https://github.com/thepersonalaicompany/amurex-web/issues/new",
                             "_blank"
                           )
                         }

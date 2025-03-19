@@ -39,6 +39,11 @@ export default function AISearch() {
   const [suggestedPrompts, setSuggestedPrompts] = useState([]);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
+  const [searchStartTime, setSearchStartTime] = useState(null);
+  const [sourcesTime, setSourcesTime] = useState(null);
+  const [completionTime, setCompletionTime] = useState(null);
+  const [hasGmail, setHasGmail] = useState(false);
+  const [gmailEnabled, setGmailEnabled] = useState(true);
 
   // Add useRouter
   const router = useRouter();
@@ -141,7 +146,7 @@ export default function AISearch() {
     checkOnboardingStatus();
   }, []);
 
-  // Add useEffect to check connections
+  // Update the useEffect for checking connections
   useEffect(() => {
     if (!session?.user?.id) return;
 
@@ -157,7 +162,9 @@ export default function AISearch() {
       .single()
       .then(({ data }) => {
         googleConnected = !!data?.google_docs_connected;
+        console.log("google docs connected", data?.google_docs_connected);
         setHasGoogleDocs(googleConnected);
+        setHasGmail(!!data?.google_docs_connected);
         connectionsChecked++;
         if (connectionsChecked === 2) {
           checkOnboarding(googleConnected, notionConnected);
@@ -244,7 +251,7 @@ export default function AISearch() {
       });
   }, [session?.user?.id]);
 
-  // Update sendMessage to check enabled sources
+  // Update sendMessage to include Gmail
   const sendMessage = (messageToSend) => {
     if (!session?.user?.id) return;
 
@@ -252,7 +259,13 @@ export default function AISearch() {
     setInputValue("");
     setIsSearching(true);
     setIsSearchInitiated(true);
-
+    
+    // Reset all timing metrics
+    const startTime = performance.now();
+    setSearchStartTime(startTime);
+    setSourcesTime(null);
+    setCompletionTime(null);
+    
     setSearchResults({
       query: message,
       sources: [],
@@ -268,6 +281,7 @@ export default function AISearch() {
         notionEnabled,
         memorySearchEnabled,
         obsidianEnabled,
+        gmailEnabled,
         user_id: session.user.id,
       }),
       headers: {
@@ -280,45 +294,67 @@ export default function AISearch() {
         const reader = response.body.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
-
-        function processText(text) {
-          const lines = text.split("\n");
-          return lines
-            .filter((line) => line.trim())
-            .map((line) => JSON.parse(line));
-        }
+        let sourcesReceived = false;
+        let firstChunkReceived = false;
 
         function readStream() {
           reader
             .read()
             .then(({ done, value }) => {
               if (done) {
+                // Record final completion time when stream ends
+                const endTime = performance.now();
+                setCompletionTime(((endTime - startTime) / 1000).toFixed(1));
                 setIsSearching(false);
                 return;
               }
 
               buffer += decoder.decode(value, { stream: true });
-              const lines = processText(buffer);
-
-              lines.forEach((data) => {
-                if (data.success) {
-                  setSearchResults((prev) => {
-                    // Only add the new content from this chunk
-                    const newContent = data.chunk || "";
-                    return {
-                      ...prev,
-                      sources: data.sources || prev.sources,
-                      answer: prev.answer + newContent,
-                      done: data.done || false,
-                    };
-                  });
-                  console.log("sources:", data.sources);
-                } else {
-                  console.error("Error:", data.error);
+              
+              try {
+                // Split by newlines and filter out empty lines
+                const lines = buffer.split("\n").filter(line => line.trim());
+                
+                // Process each complete line
+                for (let i = 0; i < lines.length; i++) {
+                  try {
+                    const data = JSON.parse(lines[i]);
+                    
+                    // Update search results
+                    if (data.success) {
+                      // Track when sources first arrive
+                      if (data.sources && data.sources.length > 0 && !sourcesReceived) {
+                        sourcesReceived = true;
+                        const currentTime = performance.now();
+                        setSourcesTime(((currentTime - startTime) / 1000).toFixed(1));
+                      }
+                      
+                      // Track when first text chunk arrives
+                      if (data.chunk && !firstChunkReceived) {
+                        firstChunkReceived = true;
+                      }
+                      
+                      setSearchResults((prev) => ({
+                        ...prev,
+                        sources: data.sources || prev.sources,
+                        answer: prev.answer + (data.chunk || ""),
+                        done: data.done || false,
+                      }));
+                    }
+                  } catch (e) {
+                    console.error("Error parsing JSON:", e, "Line:", lines[i]);
+                  }
                 }
-              });
-
-              buffer = ""; // Clear the buffer after processing
+                
+                // Keep only the incomplete line in the buffer
+                const lastNewlineIndex = buffer.lastIndexOf("\n");
+                if (lastNewlineIndex !== -1) {
+                  buffer = buffer.substring(lastNewlineIndex + 1);
+                }
+              } catch (e) {
+                console.error("Error processing buffer:", e);
+              }
+              
               readStream();
             })
             .catch((err) => {
@@ -399,7 +435,8 @@ export default function AISearch() {
                   </h1>
                 </div>
                 <div className="flex flex-col gap-2 w-full md:w-auto">
-                  <div className="grid grid-cols-2 md:flex items-center gap-2">
+                  <div className="grid grid-cols-2 md:grid-cols-3 items-center gap-2">
+                    {/* First row with Google Docs, Meetings, and Notion */}
                     {!hasGoogleDocs ? (
                       <a
                         href="/settings?tab=personalization"
@@ -494,9 +531,8 @@ export default function AISearch() {
                         )}
                       </button>
                     )}
-                  </div>
 
-                  <div className="grid grid-cols-2 md:flex items-center gap-2">
+                    {/* Notion button */}
                     {!hasNotion ? (
                       <a
                         href="/settings?tab=personalization"
@@ -546,7 +582,11 @@ export default function AISearch() {
                         )}
                       </button>
                     )}
+                  </div>
 
+                  {/* Second row with Obsidian and Gmail */}
+                  <div className="grid grid-cols-2 md:grid-cols-3 items-center gap-2">
+                    {/* Obsidian button */}
                     {!hasObsidian ? (
                       <a
                         href="/settings?tab=personalization"
@@ -579,6 +619,57 @@ export default function AISearch() {
                         />
                         Obsidian
                         {obsidianEnabled && (
+                          <svg
+                            className="w-3 h-3 md:w-4 md:h-4 ml-1"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            xmlns="http://www.w3.org/2000/svg"
+                          >
+                            <path
+                              d="M20 6L9 17L4 12"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        )}
+                      </button>
+                    )}
+
+                    {/* Gmail button */}
+                    {!hasGmail ? (
+                      <a
+                        href="/settings?tab=personalization"
+                        target="_blank"
+                        className="px-2 md:px-4 py-2 inline-flex items-center justify-center gap-1 md:gap-2 rounded-[8px] text-xs md:text-md font-medium border border-white/10 cursor-pointer text-[#FAFAFA] opacity-80 hover:bg-[#3c1671] transition-all duration-200 whitespace-nowrap relative group"
+                      >
+                        <img
+                          src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Gmail_icon_%282020%29.svg/2560px-Gmail_icon_%282020%29.svg.png"
+                          alt="Gmail"
+                          className="w-3 md:w-4"
+                        />
+                        Gmail
+                        <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-white text-black px-2 py-1 rounded text-sm opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
+                          Connect Gmail
+                        </span>
+                      </a>
+                    ) : (
+                      <button
+                        onClick={() => setGmailEnabled(!gmailEnabled)}
+                        className={`px-2 md:px-4 py-2 inline-flex items-center justify-center gap-1 md:gap-2 rounded-[8px] text-xs md:text-md font-medium border border-white/10 ${
+                          gmailEnabled
+                            ? "bg-[#9334E9] text-[#FAFAFA]"
+                            : "text-[#FAFAFA]"
+                        } transition-all duration-200 whitespace-nowrap hover:border-[#6D28D9]`}
+                      >
+                        <img
+                          src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Gmail_icon_%282020%29.svg/2560px-Gmail_icon_%282020%29.svg.png"
+                          alt="Gmail"
+                          className="w-3 md:w-4"
+                        />
+                        Gmail
+                        {gmailEnabled && (
                           <svg
                             className="w-3 h-3 md:w-4 md:h-4 ml-1"
                             viewBox="0 0 24 24"
@@ -668,11 +759,38 @@ export default function AISearch() {
 
               {(isSearching || searchResults?.query) && (
                 <div className="space-y-6">
-                  <Query content={searchResults?.query || ""} />
+                  <Query 
+                    content={searchResults?.query || ""} 
+                    sourcesTime={sourcesTime}
+                    completionTime={completionTime}
+                  />
 
                   <div className="grid grid-cols-1 lg:grid-cols-[2fr,1fr] gap-6">
                     <div>
-                      <Heading content="Answer" />
+                      <div className="flex justify-between items-center mb-3">
+                        <Heading content="Answer" />
+                        {!isSearching && searchResults?.query && (
+                          <button
+                            onClick={() => sendMessage(searchResults.query)}
+                            className="flex items-center gap-1 text-sm text-zinc-300 hover:text-white bg-black border border-zinc-800 hover:border-[#6D28D9] px-3 py-1.5 rounded-md transition-colors"
+                          >
+                            <svg 
+                              width="16" 
+                              height="16" 
+                              viewBox="0 0 489.645 489.645" 
+                              fill="currentColor" 
+                              xmlns="http://www.w3.org/2000/svg"
+                            >
+                              <path d="M460.656,132.911c-58.7-122.1-212.2-166.5-331.8-104.1c-9.4,5.2-13.5,16.6-8.3,27c5.2,9.4,16.6,13.5,27,8.3
+                                c99.9-52,227.4-14.9,276.7,86.3c65.4,134.3-19,236.7-87.4,274.6c-93.1,51.7-211.2,17.4-267.6-70.7l69.3,14.5
+                                c10.4,2.1,21.8-4.2,23.9-15.6c2.1-10.4-4.2-21.8-15.6-23.9l-122.8-25c-20.6-2-25,16.6-23.9,22.9l15.6,123.8
+                                c1,10.4,9.4,17.7,19.8,17.7c12.8,0,20.8-12.5,19.8-23.9l-6-50.5c57.4,70.8,170.3,131.2,307.4,68.2
+                                C414.856,432.511,548.256,314.811,460.656,132.911z"/>
+                            </svg>
+                            Regenerate
+                          </button>
+                        )}
+                      </div>
                       <div className="bg-black rounded-lg p-4 border border-zinc-800 text-zinc-300">
                         <GPT content={searchResults?.answer || ""} />
                         {isSearching && (
@@ -723,57 +841,40 @@ export function InputArea({
   );
 }
 /* 21. Query component for displaying content */
-export const Query = ({ content = "" }) => {
+export const Query = ({ content = "", sourcesTime, completionTime }) => {
   return (
-    <div className="text-xl md:text-3xl font-medium text-white">{content}</div>
+    <div className="flex flex-col md:flex-row md:items-center justify-between">
+      <div className="text-xl md:text-3xl font-medium text-white">{content}</div>
+      <div className="text-sm text-zinc-500 mt-1 md:mt-0 flex flex-col md:items-end">
+        {sourcesTime && (
+          <div className="px-2 py-1 rounded-md bg-[#9334E9] text-white w-fit">
+            Searched in {sourcesTime} seconds
+          </div>
+        )}
+      </div>
+    </div>
   );
 };
 /* 22. Sources component for displaying list of sources */
 export const Sources = ({ content = [] }) => {
-  const [meetings, setMeetings] = useState({});
-  const [isLoading, setIsLoading] = useState(true);
-
+  // Debug the content structure
   useEffect(() => {
-    const fetchMeetingTypes = async () => {
-      if (!content.length) {
-        setIsLoading(false);
-        return;
-      }
-
-      // Filter only meeting sources
-      const meetingSources = content.filter((source) => source.meeting_id);
-      const meetingIds = meetingSources.map((source) => source.meeting_id);
-
-      if (meetingIds.length > 0) {
-        const { data, error } = await supabase
-          .from("late_meeting")
-          .select("id, meeting_id")
-          .in("id", meetingIds);
-
-        if (error) {
-          console.error("Error fetching meeting types:", error);
-          setIsLoading(false);
-          return;
-        }
-
-        // Create a map of meeting IDs and their types
-        const meetingMap = {};
-        data.forEach((meeting) => {
-          meetingMap[meeting.id] = {
-            ...meeting,
-            platform: meeting.meeting_id.includes("-") ? "google" : "teams",
-          };
-        });
-        setMeetings(meetingMap);
-      }
-
-      setIsLoading(false);
-    };
-
-    fetchMeetingTypes();
+    console.log("Sources content:", content);
   }, [content]);
 
-  if (isLoading) {
+  // Helper function to create Gmail URL from message or thread ID
+  const createGmailUrl = (source) => {
+    // Check if we have a message_id or thread_id
+    if (source.message_id) {
+      return `https://mail.google.com/mail/u/0/#inbox/${source.message_id}`;
+    } else if (source.thread_id) {
+      return `https://mail.google.com/mail/u/0/#inbox/${source.thread_id}`;
+    }
+    // Fallback to the provided URL or a default
+    return source.url || `/emails/${source.id}`;
+  };
+
+  if (!content || content.length === 0) {
     return (
       <div>
         <div className="text-[#9334E9] font-medium mb-3 text-md md:text-xl flex items-center gap-2">
@@ -803,84 +904,146 @@ export const Sources = ({ content = [] }) => {
       </div>
       <div className="grid grid-cols-1 gap-2">
         {Array.isArray(content) &&
-          content.map((source, index) =>
-            source.meeting_id ? (
-              // Meeting source
-              <a
-                key={index}
-                href={`/meetings/${source.meeting_id}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="block"
-              >
-                <div className="bg-black rounded-lg p-4 border border-zinc-800 hover:border-[#6D28D9] transition-colors h-[160px] relative">
-                  <Link className="absolute top-4 right-4 w-4 h-4 text-zinc-500" />
-                  <div className="text-zinc-300 text-sm font-medium mb-2 flex items-center gap-2">
-                    {meetings[source.meeting_id]?.platform === "google" ? (
-                      <img
-                        src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Google_Meet_icon_%282020%29.svg/1024px-Google_Meet_icon_%282020%29.svg.png?20221213135236"
-                        alt="Google Meet"
-                        className="w-8"
-                      />
-                    ) : (
-                      <img
-                        src="https://www.svgrepo.com/show/303180/microsoft-teams-logo.svg"
-                        alt="Microsoft Teams"
-                        className="w-8"
-                      />
-                    )}
-                    {meetings[source.meeting_id]?.platform === "google"
-                      ? "Google Meet"
-                      : "Microsoft Teams"}
-                    , Meeting ID: {meetings[source.meeting_id]?.meeting_id}
+          content.map((source, index) => {
+            // For debugging
+            console.log(`Source ${index}:`, source);
+            
+            if (source.type === "meeting") {
+              // Check if platform_id exists and is a string before using includes
+              let platform = "teams"; // Default to teams
+              
+              try {
+                if (source.platform_id && typeof source.platform_id === 'string') {
+                  platform = source.platform_id.includes("-") ? "google" : "teams";
+                }
+              } catch (error) {
+                console.error("Error determining platform:", error);
+              }
+              
+              return (
+                <a
+                  key={index}
+                  href={source.url}
+                  className="block"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <div className="bg-black rounded-lg p-4 border border-zinc-800 hover:border-[#6D28D9] transition-colors h-[160px] relative">
+                    <Link className="absolute top-4 right-4 w-4 h-4 text-zinc-500" />
+                    <div className="text-zinc-300 text-sm font-medium mb-2 flex items-center gap-2">
+                      {platform === "google" ? (
+                        <img
+                          src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Google_Meet_icon_%282020%29.svg/1024px-Google_Meet_icon_%282020%29.svg.png?20221213135236"
+                          alt="Google Meet"
+                          className="w-8"
+                        />
+                      ) : (
+                        <img
+                          src="https://www.svgrepo.com/show/303180/microsoft-teams-logo.svg"
+                          alt="Microsoft Teams"
+                          className="w-8"
+                        />
+                      )}
+                      {source.title}
+                    </div>
+                    <div className="text-zinc-500 text-xs overflow-hidden line-clamp-4">
+                      <ReactMarkdown>{source.text}</ReactMarkdown>
+                    </div>
                   </div>
-                  <div className="text-zinc-500 text-xs overflow-hidden line-clamp-4">
-                    <ReactMarkdown>{source.text}</ReactMarkdown>
-                  </div>
-                </div>
-              </a>
-            ) : (
-              // Document source
-              <a
-                key={index}
-                href={source.url}
-                className="block"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <div className="bg-black rounded-lg p-4 border border-zinc-800 hover:border-[#6D28D9] transition-colors h-[160px] relative">
-                  <Link className="absolute top-4 right-4 w-4 h-4 text-zinc-500" />
-                  <div className="text-zinc-300 text-sm font-medium mb-2 flex items-center gap-2">
-                    {source.type === "google_docs" ? (
+                </a>
+              );
+            } else if (source.type === "email") {
+              // Create Gmail URL from message_id or thread_id
+              const gmailUrl = createGmailUrl(source);
+              
+              return (
+                <a
+                  key={index}
+                  href={gmailUrl}
+                  className="block"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <div className="bg-black rounded-lg p-4 border border-zinc-800 hover:border-[#6D28D9] transition-colors h-[160px] relative">
+                    <Link className="absolute top-4 right-4 w-4 h-4 text-zinc-500" />
+                    <div className="text-zinc-300 text-sm font-medium mb-2 flex items-center gap-2">
                       <img
-                        src="https://upload.wikimedia.org/wikipedia/commons/0/01/Google_Docs_logo_%282014-2020%29.svg"
-                        alt="Google Docs"
-                        className="w-6"
+                        src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Gmail_icon_%282020%29.svg/2560px-Gmail_icon_%282020%29.svg.png"
+                        alt="Gmail"
+                        className="w-6 flex-shrink-0"
                       />
-                    ) : source.type === "notion" ? (
-                      <img
-                        src="https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png"
-                        alt="Notion"
-                        className="w-6"
-                      />
-                    ) : source.type === "obsidian" ? (
-                      <img
-                        src="https://obsidian.md/images/obsidian-logo-gradient.svg"
-                        alt="Obsidian"
-                        className="w-6"
-                      />
-                    ) : (
-                      <Stack size={24} />
-                    )}
-                    <span className="truncate">Title: {source.title}</span>
+                      <div className="flex flex-col overflow-hidden">
+                        <span className="truncate font-medium max-w-full">
+                          {source.title}
+                        </span>
+                        <span className="text-xs text-zinc-400 truncate max-w-full">
+                          {source.sender}
+                        </span>
+                        {source.received_at && (
+                          <span className="text-xs text-zinc-500">
+                            {new Date(source.received_at).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <div className="text-zinc-500 text-xs overflow-hidden line-clamp-4">
+                      {source.text}
+                    </div>
                   </div>
-                  <div className="text-zinc-500 text-xs overflow-hidden line-clamp-4">
-                    <ReactMarkdown>{source.text}</ReactMarkdown>
+                </a>
+              );
+            } else {
+              // Handle document types with appropriate icons
+              let icon = null;
+              
+              if (source.type === "google_docs") {
+                icon = (
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/0/01/Google_Docs_logo_%282014-2020%29.svg"
+                    alt="Google Docs"
+                    className="w-6 h-6"
+                  />
+                );
+              } else if (source.type === "notion") {
+                icon = (
+                  <img
+                    src="https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png"
+                    alt="Notion"
+                    className="w-6 h-6"
+                  />
+                );
+              } else if (source.type === "obsidian") {
+                icon = (
+                  <img
+                    src="https://obsidian.md/images/obsidian-logo-gradient.svg"
+                    alt="Obsidian"
+                    className="w-6 h-6"
+                  />
+                );
+              }
+              
+              return (
+                <a
+                  key={index}
+                  href={source.url}
+                  className="block"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <div className="bg-black rounded-lg p-4 border border-zinc-800 hover:border-[#6D28D9] transition-colors h-[160px] relative">
+                    <Link className="absolute top-4 right-4 w-4 h-4 text-zinc-500" />
+                    <div className="text-zinc-300 text-sm font-medium mb-2 flex items-center gap-2">
+                      {icon}
+                      <span className="truncate">{source.title || "Document"}</span>
+                    </div>
+                    <div className="text-zinc-500 text-xs overflow-hidden line-clamp-4">
+                      <ReactMarkdown>{source.text}</ReactMarkdown>
+                    </div>
                   </div>
-                </div>
-              </a>
-            )
-          )}
+                </a>
+              );
+            }
+          })}
       </div>
     </div>
   );

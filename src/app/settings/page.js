@@ -1315,7 +1315,7 @@ function SettingsContent() {
                             <img
                               src={PROVIDER_ICONS.gmail}
                               alt="Gmail"
-                              className="w-6 h-6"
+                              className="w-6"
                             />
                             <div>
                               <h3 className="font-medium text-white text-lg">
@@ -1384,7 +1384,7 @@ function SettingsContent() {
                                   <img
                                     src={PROVIDER_ICONS.gmail}
                                     alt="Gmail"
-                                    className="w-4 h-4 mr-2"
+                                    className="w-4 mr-2"
                                   />
                                   Process Emails
                                 </div>

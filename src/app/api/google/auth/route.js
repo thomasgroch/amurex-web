@@ -44,7 +44,11 @@ export async function POST(req) {
       state: userId,
     });
 
-    return NextResponse.json({ success: true, url });
+    // Add source as a query parameter to the redirect URI
+    const urlWithSource = new URL(authUrl);
+    urlWithSource.searchParams.append('source', source);
+    
+    return NextResponse.json({ url: urlWithSource.toString() });
   } catch (error) {
     console.error("Error generating Google OAuth URL:", error);
     return NextResponse.json(

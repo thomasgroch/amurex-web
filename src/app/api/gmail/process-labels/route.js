@@ -3,9 +3,10 @@ import { supabase } from '@/lib/supabaseClient';
 import { google } from 'googleapis';
 import OpenAI from 'openai';
 
-// Initialize OpenAI client
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY
+// Initialize Groq client using OpenAI SDK
+const groq = new OpenAI({
+  apiKey: process.env.GROQ_API_KEY,
+  baseURL: "https://api.groq.com/openai/v1",
 });
 
 // Gmail label colors
@@ -37,20 +38,11 @@ const GMAIL_COLORS = {
 //   "brown": { "backgroundColor": "#b65775", "textColor": "#ffffff" }
 // };
 
-// Helper function to categorize emails using OpenAI or Groq
-async function categorizeWithAI(fromEmail, subject, body, useGroq = false) {
+// Helper function to categorize emails using Groq
+async function categorizeWithAI(fromEmail, subject, body) {
   try {
-    const client = useGroq ? 
-      new OpenAI({
-        apiKey: process.env.GROQ_API_KEY,
-        baseURL: "https://api.groq.com/openai/v1",
-      }) : 
-      openai;
-    
-    const model = useGroq ? "llama-3.3-70b-versatile" : "gpt-4o";
-    
-    const response = await client.chat.completions.create({
-      model: model,
+    const response = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
       messages: [
         {
           role: "system",
@@ -67,7 +59,7 @@ async function categorizeWithAI(fromEmail, subject, body, useGroq = false) {
 
     // Get the raw response and convert to a number
     const rawResponse = response.choices[0].message.content.trim();
-    console.log(`Raw ${useGroq ? 'Groq' : 'OpenAI'} category response:`, rawResponse);
+    console.log(`Raw Groq category response:`, rawResponse);
     
     // Extract just the first digit from the response
     const numberMatch = rawResponse.match(/\d/);
@@ -99,7 +91,7 @@ async function categorizeWithAI(fromEmail, subject, body, useGroq = false) {
       return "none";
     }
   } catch (error) {
-    console.error(`Error categorizing with ${useGroq ? 'Groq' : 'OpenAI'}:`, error);
+    console.error(`Error categorizing with Groq:`, error);
     // Default to "none" on error
     return "none";
   }
@@ -417,10 +409,10 @@ export async function POST(req) {
           body = "[Error extracting content: " + (bodyExtractionError.message || "Unknown error") + "]";
         }
         
-        // Only use OpenAI to categorize selected emails
+        // Only use Groq to categorize selected emails
         if (shouldCategorize) {
           const truncatedBody = body.length > 1500 ? body.substring(0, 1500) + "..." : body;
-          category = await categorizeWithAI(fromEmail, subject, truncatedBody, requestData.useGroq);
+          category = await categorizeWithAI(fromEmail, subject, truncatedBody);
           
           // Apply the label only if the category is not "none"
           if (category !== "none" && amurexLabels[category]) {

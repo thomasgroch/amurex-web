@@ -7,7 +7,13 @@ import crypto from 'crypto';
 import { RecursiveCharacterTextSplitter } from 'langchain/text_splitter';
 
 const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
-const openai = new OpenAI(process.env.OPENAI_API_KEY);
+
+// Initialize Groq client using OpenAI SDK
+const groq = new OpenAI({
+  apiKey: process.env.GROQ_API_KEY,
+  baseURL: "https://api.groq.com/openai/v1",
+});
+
 const notion = new Client({ auth: process.env.NOTION_API_KEY });
 const auth = new google.auth.GoogleAuth({
   keyFile: process.env.GOOGLE_APPLICATION_CREDENTIALS,
@@ -22,9 +28,9 @@ export async function POST(req) {
   }
 
   try {
-    // Generate tags using OpenAI
-    const tagsResponse = await openai.chat.completions.create({
-      model: "gpt-4o-mini",
+    // Generate tags using Groq
+    const tagsResponse = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
       messages: [
         { role: "system", content: "You are a helpful assistant that generates relevant tags for a given text." },
         { role: "user", content: `Generate 20 relevant tags for the following text:\n\n${text.substring(0, 1000)}` }
@@ -81,7 +87,7 @@ export async function POST(req) {
 
     // Process each section
     for (const section of sections) {
-      const embeddingResponse = await openai.embeddings.create({
+      const embeddingResponse = await groq.embeddings.create({
         model: "text-embedding-ada-002",
         input: section.pageContent,
       });

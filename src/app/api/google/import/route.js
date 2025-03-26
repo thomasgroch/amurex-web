@@ -6,14 +6,18 @@ import crypto from "crypto";
 import { RecursiveCharacterTextSplitter } from "langchain/text_splitter";
 import { createClient } from "@supabase/supabase-js";
 
-const openai = new OpenAI(process.env.OPENAI_API_KEY);
+// Initialize Groq client using OpenAI SDK
+const groq = new OpenAI({
+  apiKey: process.env.GROQ_API_KEY,
+  baseURL: "https://api.groq.com/openai/v1",
+});
 
 export const maxDuration = 300;
 export const dynamic = "force-dynamic";
 
 async function generateTags(text) {
-  const tagsResponse = await openai.chat.completions.create({
-    model: "gpt-4o",
+  const tagsResponse = await groq.chat.completions.create({
+    model: "llama-3.3-70b-versatile",
     messages: [
       {
         role: "system",

@@ -6,8 +6,7 @@ import OpenAI from "openai";
 import * as cheerio from "cheerio";
 import { createClient } from "@supabase/supabase-js";
 import fetch from 'node-fetch';
-// 2. Initialize OpenAI and Supabase clients
-const openai = new OpenAI({ apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY });
+// 2. Initialize Supabase client
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -34,31 +33,18 @@ async function sendPayload(content, user_id) {
 // 4. Rephrase input using GPT
 async function rephraseInput(inputString) {
   console.log("inputString", inputString);
-//   const gptAnswer = await openai.chat.completions.create({
-//     model: "gpt-4",
-//     messages: [
-//       {
-//         role: "system",
-//         content:
-//           "You are a rephraser and always respond with a rephrased version of the input that is given to a search engine API. Always be succint and use the same words as the input.",
-//       },
-//       { role: "user", content: inputString },
-//     ],
-//   });
-//   return gptAnswer.choices[0].message.content;
-// }
-
-// async function searchMemory(queryEmbedding, user_id) {
-//   const { data: chunks, error } = await supabase.rpc(
-//     "fafsearch_one",
-//     {
-//       query_embedding: queryEmbedding,
-//       input_user_id: user_id,
-//     }
-//   );
-
-//   if (error) throw error;
-//   return chunks;
+  const gptAnswer = await groq.chat.completions.create({
+    model: "llama-3.3-70b-versatile",
+    messages: [
+      {
+        role: "system",
+        content:
+          "You are a rephraser and always respond with a rephrased version of the input that is given to a search engine API. Always be succint and use the same words as the input.",
+      },
+      { role: "user", content: inputString },
+    ],
+  });
+  return gptAnswer.choices[0].message.content;
 }
 
 async function searchMemory(queryEmbedding, user_id) {
@@ -224,9 +210,9 @@ async function triggerLLMAndFollowup(inputString, user_id) {
 // 32. Define getGPTResults function
 const getGPTResults = async (inputString, user_id) => {
   let accumulatedContent = "";
-  // 34. Open a streaming connection with OpenAI
-  const stream = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+  // 34. Open a streaming connection with Groq
+  const stream = await groq.chat.completions.create({
+    model: "llama-3.3-70b-versatile",
     messages: [
       {
         role: "system",
@@ -312,9 +298,9 @@ async function generateFollowup(message) {
     const data = await response.json();
     return data.message.content;
   } else {
-    // Use OpenAI
-    const chatCompletion = await openai.chat.completions.create({
-      model: "gpt-4o",
+    // Use Groq
+    const chatCompletion = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
       messages: messages,
     });
     return chatCompletion.choices[0].message.content;
@@ -352,9 +338,9 @@ async function generatePrompts(documents) {
     const data = await response.json();
     return JSON.parse(data.message.content);
   } else {
-    // Use OpenAI
-    const gptResponse = await openai.chat.completions.create({
-      model: "gpt-4o",
+    // Use Groq
+    const gptResponse = await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
       messages: messages,
       response_format: { type: "json_object" }
     });
@@ -390,9 +376,9 @@ async function generateCompletion(messages, modelName) {
       ]
     };
   } else {
-    // Use OpenAI
-    return await openai.chat.completions.create({
-      model: "gpt-4o",
+    // Use Groq
+    return await groq.chat.completions.create({
+      model: "llama-3.3-70b-versatile",
       messages: messages,
     });
   }

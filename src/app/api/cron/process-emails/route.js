@@ -1,5 +1,11 @@
 import { NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabaseClient';
+import { createClient } from '@supabase/supabase-js';
+
+// Create a Supabase client with the service key for admin access
+const supabaseAdmin = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
 export async function GET(req) {
   // Verify this is a legitimate cron job request
@@ -9,8 +15,8 @@ export async function GET(req) {
   }
 
   try {
-    // Get all users with email tagging enabled
-    const { data: users, error: usersError } = await supabase
+    // Get all users with email tagging enabled using the admin client
+    const { data: users, error: usersError } = await supabaseAdmin
       .from("users")
       .select("id, email_tagging_enabled")
       .eq("email_tagging_enabled", true)

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabaseClient';
 import { google } from 'googleapis';
 import OpenAI from 'openai';
+import { createClient } from "@supabase/supabase-js";
 
 // Initialize Groq client using OpenAI SDK
 const groq = new OpenAI({
@@ -102,13 +103,27 @@ export async function POST(req) {
     const requestData = await req.json();
     const userId = requestData.userId;
     const useStandardColors = requestData.useStandardColors === true;
+    const accessToken = requestData.accessToken;
 
     if (!userId) {
       return NextResponse.json({ success: false, error: "User ID is required" }, { status: 400 });
     }
 
-    // Fetch user's Google credentials
-    const { data: userData, error: userError } = await supabase
+    // Create Supabase client with service role key for admin access
+    const adminSupabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY,
+      {
+        global: {
+          headers: accessToken ? {
+            Authorization: `Bearer ${accessToken}`,
+          } : undefined,
+        },
+      }
+    );
+
+    // Fetch user's Google credentials using admin Supabase client
+    const { data: userData, error: userError } = await adminSupabase
       .from("users")
       .select("google_refresh_token, email_tagging_enabled")
       .eq("id", userId)
@@ -229,7 +244,7 @@ export async function POST(req) {
       }
 
       // Create a set of already processed message IDs to avoid duplicates
-      const { data: processedEmails, error: processedError } = await supabase
+      const { data: processedEmails, error: processedError } = await adminSupabase
         .from('emails')
         .select('message_id')
         .eq('user_id', userId);
@@ -448,7 +463,7 @@ export async function POST(req) {
       // Helper function to store email in database
       async function storeEmailInDatabase(userId, messageId, threadId, sender, subject, content, receivedAt, isRead, snippet) {
         // Check if email already exists in the database
-        const { data: existingEmail } = await supabase
+        const { data: existingEmail } = await adminSupabase
           .from('emails')
           .select('id')
           .eq('user_id', userId)
@@ -477,7 +492,7 @@ export async function POST(req) {
             content_length: content ? content.length : 0
           });
           
-          const { error: insertError } = await supabase
+          const { error: insertError } = await adminSupabase
             .from('emails')
             .insert(emailData);
             
@@ -490,7 +505,7 @@ export async function POST(req) {
               delete emailData.category;
               delete emailData.is_categorized;
               
-              const { error: retryError } = await supabase
+              const { error: retryError } = await adminSupabase
                 .from('emails')
                 .insert(emailData);
                 

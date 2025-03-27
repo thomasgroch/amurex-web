@@ -3,12 +3,19 @@ import { supabase } from "@/lib/supabaseClient";
 import { Client } from "@notionhq/client";
 import OpenAI from "openai";
 import crypto from "crypto";
+import { createClient } from "@supabase/supabase-js";
 
 // Initialize Groq client using OpenAI SDK
 const groq = new OpenAI({
   apiKey: process.env.GROQ_API_KEY,
   baseURL: "https://api.groq.com/openai/v1",
 });
+
+// Create admin Supabase client with service role key
+const adminSupabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
 export const maxDuration = 300;
 
@@ -62,7 +69,7 @@ export async function POST(req) {
 
     // Get user email if not in headers
     if (!userEmail) {
-      const { data: userData, error: userError } = await supabase
+      const { data: userData, error: userError } = await adminSupabase
         .from("users")
         .select("email")
         .eq("id", session.user.id)
@@ -75,7 +82,7 @@ export async function POST(req) {
       userEmail = userData.email;
     }
 
-    const { data: user, error: userError } = await supabase
+    const { data: user, error: userError } = await adminSupabase
       .from("users")
       .select("notion_access_token")
       .eq("id", session.user.id)
@@ -121,7 +128,7 @@ export async function POST(req) {
           .digest("hex");
 
         // Check for existing page
-        const { data: existingPage } = await supabase
+        const { data: existingPage } = await adminSupabase
           .from("documents")
           .select("id")
           .eq("checksum", checksum)
@@ -148,7 +155,7 @@ export async function POST(req) {
           let pageError;
           
           // First attempt with full content
-          const fullContentResult = await supabase
+          const fullContentResult = await adminSupabase
             .from("documents")
             .insert({
               url: page.url,
@@ -186,7 +193,7 @@ export async function POST(req) {
             const truncatedContent = pageContent.substring(0, 10000) + 
               "\n[Content truncated due to size limitations]";
             
-            const truncatedResult = await supabase
+            const truncatedResult = await adminSupabase
               .from("documents")
               .insert({
                 url: page.url,
@@ -252,7 +259,7 @@ export async function POST(req) {
               embedData.data.map((item) => item.embedding)
             ).join(",")}]`;
 
-            const { error: updateError } = await supabase
+            const { error: updateError } = await adminSupabase
               .from("documents")
               .update({
                 chunks: chunkTexts,

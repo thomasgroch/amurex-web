@@ -1,7 +1,13 @@
 import { NextResponse } from "next/server";
-import { supabase } from "@/lib/supabaseClient";
+import { createClient } from "@supabase/supabase-js";
 import OpenAI from "openai";
 import crypto from "crypto";
+
+// Create admin Supabase client with service role key
+const adminSupabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
 
 // Initialize Groq client using OpenAI SDK
 const groq = new OpenAI({
@@ -73,7 +79,7 @@ export async function POST(req) {
     let userEmail = req.headers.get("x-user-email");
 
     if (!userEmail) {
-      const { data: userData, error: userError } = await supabase
+      const { data: userData, error: userError } = await adminSupabase
         .from("users")
         .select("email")
         .eq("id", userId)
@@ -95,7 +101,7 @@ export async function POST(req) {
     const checksum = crypto.createHash("sha256").update(content).digest("hex");
 
     // Check for existing document
-    const { data: existingDoc } = await supabase
+    const { data: existingDoc } = await adminSupabase
       .from("documents")
       .select("id")
       .eq("checksum", checksum)
@@ -112,7 +118,7 @@ export async function POST(req) {
     }
 
     // Create new document
-    const { data: newDoc, error: docError } = await supabase
+    const { data: newDoc, error: docError } = await adminSupabase
       .from("documents")
       .insert({
         title: fileName,
@@ -166,7 +172,7 @@ export async function POST(req) {
         embedData.data.map((item) => item.embedding)
       ).join(",")}]`;
 
-      const { error: updateError } = await supabase
+      const { error: updateError } = await adminSupabase
         .from("documents")
         .update({
           chunks: chunkTexts,

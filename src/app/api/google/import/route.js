@@ -209,7 +209,12 @@ export async function GET(req) {
 async function processGoogleDocs(session, supabase) {
   try {
     // Get user's Google tokens
-    const { data: user, error: userError } = await supabase
+    const adminSupabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.SUPABASE_SERVICE_ROLE_KEY
+    );
+    
+    const { data: user, error: userError } = await adminSupabase
       .from("users")
       .select("google_access_token, google_refresh_token, google_token_expiry")
       .eq("id", session.id)
@@ -242,7 +247,7 @@ async function processGoogleDocs(session, supabase) {
       const { credentials } = await oauth2Client.refreshAccessToken();
 
       // Update tokens in database
-      const { error: updateError } = await supabase
+      const { error: updateError } = await adminSupabase
         .from("users")
         .update({
           google_access_token: credentials.access_token,
@@ -336,7 +341,7 @@ async function processGoogleDocs(session, supabase) {
         console.log("user id?", session.id);
 
         // Check for existing document
-        const { data: existingDoc } = await supabase
+        const { data: existingDoc } = await adminSupabase
           .from("documents")
           .select("id")
           .eq("user_id", session.id)
@@ -437,7 +442,7 @@ async function processGoogleDocs(session, supabase) {
         ).join(",")}]`;
 
         // Insert document with properly formatted vectors
-        const { data: newDoc, error: newDocError } = await supabase
+        const { data: newDoc, error: newDocError } = await adminSupabase
           .from("documents")
           .insert({
             title: file.name,

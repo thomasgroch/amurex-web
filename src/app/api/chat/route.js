@@ -6,10 +6,10 @@ import OpenAI from "openai";
 import * as cheerio from "cheerio";
 import { createClient } from "@supabase/supabase-js";
 import fetch from 'node-fetch';
-// 2. Initialize Supabase client
-const supabase = createClient(
+// 2. Initialize admin Supabase client with service role key
+const adminSupabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
 // Use OpenAI client for Groq
@@ -20,7 +20,7 @@ const groq = new OpenAI({
 
 // 3. Send payload to Supabase table
 async function sendPayload(content, user_id) {
-  await supabase
+  await adminSupabase
     .from("message_history")
     .insert([
       {
@@ -48,7 +48,7 @@ async function rephraseInput(inputString) {
 }
 
 async function searchMemory(queryEmbedding, user_id) {
-    const { data: chunks, error } = await supabase.rpc(
+    const { data: chunks, error } = await adminSupabase.rpc(
       "fafsearch_main",
       {
         query_embedding: queryEmbedding,
@@ -63,7 +63,7 @@ async function searchMemory(queryEmbedding, user_id) {
 }
 
 async function searchDocuments(queryEmbedding, user_id, enabledSources) {
-  const { data: documents, error } = await supabase.rpc(
+  const { data: documents, error } = await adminSupabase.rpc(
     "fafsearch_two",
     {
       query_embedding: queryEmbedding,
@@ -249,7 +249,7 @@ const getGPTResults = async (inputString, user_id) => {
 const createRowForGPTResponse = async (user_id) => {
   const streamId = `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
   const payload = { type: "GPT", content: "" };
-  const { data, error } = await supabase
+  const { data, error } = await adminSupabase
     .from("message_history")
     .insert([{ payload, user_id }])
     .select("id");
@@ -259,8 +259,8 @@ const createRowForGPTResponse = async (user_id) => {
 // 46. Define updateRowWithGPTResponse function
 const updateRowWithGPTResponse = async (prevRowId, content, user_id) => {
   const payload = { type: "GPT", content };
-  await supabase.from("message_history").delete().eq("id", prevRowId);
-  const { data } = await supabase
+  await adminSupabase.from("message_history").delete().eq("id", prevRowId);
+  const { data } = await adminSupabase
     .from("message_history")
     .insert([{ payload, user_id }])
     .select("id");
@@ -411,7 +411,7 @@ async function searchBrain(query, user_id, enabledSources) {
       console.log("enabledSources", enabledSources);
       
       // Use Supabase RPC for document search in self-hosted mode
-      const { data: documents, error } = await supabase.rpc(
+      const { data: documents, error } = await adminSupabase.rpc(
         "fafsearch_documents",
         {
           input_user_id: user_id,
@@ -729,12 +729,12 @@ export async function POST(req) {
 
         // fetch the user's table and find if "memory_enabled" is true
         const dbStartTime = performance.now();
-        const { data: user, error } = await supabase.from('users').select('memory_enabled').eq('id', user_id).single();
+        const { data: user, error } = await adminSupabase.from('users').select('memory_enabled').eq('id', user_id).single();
         
         if (user.memory_enabled) {
           // fetch the user's memory table and find if "memory_enabled" is true
           const sessionInsertStartTime = performance.now();
-          await supabase.from('sessions').insert({
+          await adminSupabase.from('sessions').insert({
             user_id: user_id,
             query: message,
             response: fullResponse,

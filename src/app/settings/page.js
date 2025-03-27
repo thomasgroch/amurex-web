@@ -265,12 +265,12 @@ function SettingsContent() {
   useEffect(() => {
     const connection = searchParams.get("connection");
     const source = searchParams.get("source");
-    
+
     console.log("Detected URL params:", { connection, source });
-    
+
     if (connection === "success") {
       console.log("Connection successful, triggering appropriate action");
-      
+
       // Force a check of integrations first to ensure we have the latest status
       checkIntegrations().then(() => {
         // Handle based on the source parameter
@@ -278,13 +278,11 @@ function SettingsContent() {
           console.log("Gmail connection detected, processing emails");
           toast.success("Gmail connected successfully!");
           processGmailLabels();
-        }
-        else if (source === "notion") {
+        } else if (source === "notion") {
           console.log("Notion connection detected, importing documents");
           toast.success("Notion connected successfully!");
           importNotionDocuments();
-        }
-        else {
+        } else {
           // Default to Google Docs import for any other source or no source
           console.log("Google Docs connection detected, importing documents");
           toast.success("Google Docs connected successfully!");
@@ -306,9 +304,9 @@ function SettingsContent() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ 
+          body: JSON.stringify({
             userId: session.user.id,
-            source: "docs" // Specify the source for the redirect
+            source: "docs", // Specify the source for the redirect
           }),
         });
         const data = await response.json();
@@ -334,12 +332,14 @@ function SettingsContent() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ 
+          body: JSON.stringify({
             userId: session.user.id,
-            source: "gmail" // Specify the source for the redirect
+            source: "gmail", // Specify the source for the redirect
           }),
         });
-        toast.success("Please reconnect your Google account with the necessary permissions");
+        toast.success(
+          "Please reconnect your Google account with the necessary permissions"
+        );
       }
     } catch (error) {
       console.error("Error reconnecting Google account:", error);
@@ -375,7 +375,10 @@ function SettingsContent() {
           );
           setNotionConnected(user.notion_connected);
           setGoogleDocsConnected(user.google_docs_connected);
-          console.log("Setting googleDocsConnected to:", user.google_docs_connected);
+          console.log(
+            "Setting googleDocsConnected to:",
+            user.google_docs_connected
+          );
           setCalendarConnected(user.calendar_connected);
           setMemoryEnabled(user.memory_enabled);
           setEmailLabelingEnabled(user.email_tagging_enabled || false);
@@ -432,24 +435,24 @@ function SettingsContent() {
 
   const connectNotion = async () => {
     try {
-      const response = await fetch('/api/notion/auth', {
-        method: 'POST',
+      const response = await fetch("/api/notion/auth", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
-        body: JSON.stringify({ source: 'settings' }),
+        body: JSON.stringify({ source: "settings" }),
       });
-      
+
       const data = await response.json();
-      
+
       if (data.url) {
         window.location.href = data.url;
       } else {
-        throw new Error(data.error || 'Failed to get Notion authorization URL');
+        throw new Error(data.error || "Failed to get Notion authorization URL");
       }
     } catch (error) {
-      console.error('Error connecting to Notion:', error);
-      toast.error('Failed to connect to Notion');
+      console.error("Error connecting to Notion:", error);
+      toast.error("Failed to connect to Notion");
     }
   };
 
@@ -1149,6 +1152,13 @@ function SettingsContent() {
                               </h3>
                               <p className="text-sm text-zinc-400">
                                 Sync your Google Docs
+                              </p>
+                              <p className="text-xs text-zinc-600 max-w-72">
+                                You might receive a warning about the app being
+                                unverified. As we are still in the review
+                                process. You can safely proceed by clicking on
+                                &quot;Advanced&quot; and then &quot;Go to Amurex
+                                (unsafe)&quot;.
                               </p>
                             </div>
                           </div>

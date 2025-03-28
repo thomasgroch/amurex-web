@@ -56,22 +56,14 @@ export default function SharedTranscriptDetail({ params }) {
 
   const fetchTranscript = async () => {
     try {
-      const { data, error } = await supabase
-        .from('late_meeting')
-        .select(`
-          id,
-          meeting_id,
-          meeting_title,
-          created_at,
-          summary,
-          transcript,
-          action_items
-        `)
-        .eq('id', params.id)
-        .single()
-
-      if (error) throw error
-
+      const response = await fetch(`/api/meetings/${params.id}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch meeting');
+      }
+      
+      const data = await response.json();
+      
       setTranscript({
         id: data.id,
         meeting_id: data.meeting_id,
@@ -86,7 +78,7 @@ export default function SharedTranscriptDetail({ params }) {
         actionItems: data.action_items || ""
       })
     } catch (err) {
-      console.error('Error fetching transcript:', err)
+      console.error('Error fetching meeting:', err)
       setError(err.message)
     } finally {
       setLoading(false)

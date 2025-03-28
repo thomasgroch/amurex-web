@@ -5,6 +5,7 @@ import { ArrowLeft, FileText, Calendar, Clock, Download, Share2 } from 'lucide-r
 import Link from 'next/link'
 import { supabase } from "@/lib/supabaseClient"
 import styles from './TranscriptDetail.module.css';
+import ReactMarkdown from 'react-markdown';
 
 export default function SharedTranscriptDetail({ params }) {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
@@ -256,31 +257,23 @@ export default function SharedTranscriptDetail({ params }) {
               <div>
                 <h2 className="text-[#9334E9] font-medium mb-3 lg:text-xl text-md">Meeting Summary</h2>
                 <div className="bg-black rounded-lg p-4 border border-zinc-800">
-                  <div
-                    className="notes-content text-zinc-300 whitespace-pre-line lg:text-base text-sm"
-                    dangerouslySetInnerHTML={{
-                      __html: transcript.summary
-                        ? transcript.summary
-                            .trim()
-                            .split("\n")
-                            .filter((line) => line.trim() !== "")
-                            .map((line) =>
-                              line.startsWith("- ")
-                                ? `<li>${line.substring(2)}</li>`
-                                : line
-                                    .replace(/\*\*(.*?)\*\*/g, "<strong>$1</strong>")
-                                    .replace(/\*(.*?)\*/g, "<em>$1</em>")
-                                    .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2">$1</a>')
-                            )
-                            .join("\n")
-                            .replace(
-                              /(<li>.*?<\/li>)\n?(<li>.*?<\/li>)+/g,
-                              (list) => `<ul>${list}</ul>`
-                            )
-                            .replace(/\n/g, "<br>")
-                        : "No meeting notes available."
-                    }}
-                  />
+                  <div className="prose text-zinc-300 lg:text-base text-sm bg-default markdown-body">
+                    {transcript.summary ? (
+                      <ReactMarkdown
+                        components={{
+                          h3: ({ node, ...props }) => <h3 className="mb-1 text-lg font-bold" {...props} />,
+                          p: ({ node, ...props }) => <p className="mb-2" {...props} />,
+                          ul: ({ node, ...props }) => <ul className="list-disc pl-5 mb-2" {...props} />,
+                          li: ({ node, ...props }) => <li className="mb-1 ml-4" {...props} />,
+                          strong: ({ node, ...props }) => <strong className="font-bold" {...props} />,
+                        }}
+                      >
+                        {transcript.summary}
+                      </ReactMarkdown>
+                    ) : (
+                      "No meeting notes available."
+                    )}
+                  </div>
                 </div>
               </div>
             )}

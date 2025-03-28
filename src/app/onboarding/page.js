@@ -1079,7 +1079,7 @@ function OnboardingContent() {
                       className="w-6 flex-shrink-0"
                     />
                   </div>
-                  <div className="flex-1 hidden">
+                  <div className="flex-1">
                     <h3 className="font-medium text-white">Google</h3>
                     <p className="text-sm text-gray-400">
                       Connected to your Google Suite
@@ -1259,4 +1259,3 @@ export default function OnboardingPage() {
     </Suspense>
   );
 }
-

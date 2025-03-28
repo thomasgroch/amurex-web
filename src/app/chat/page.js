@@ -1344,7 +1344,7 @@ const OnboardingFlow = ({ onClose, setHasSeenOnboarding }) => {
         </p>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="hidden bg-zinc-900 rounded-lg p-6 border border-zinc-800 hover:border-zinc-600 transition-all duration-300">
+          <div className="bg-zinc-900 rounded-lg p-6 border border-zinc-800 hover:border-zinc-600 transition-all duration-300">
             <div className="flex items-center gap-3 mb-4">
               <img
                 src="https://upload.wikimedia.org/wikipedia/commons/0/01/Google_Docs_logo_%282014-2020%29.svg"

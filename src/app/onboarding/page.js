@@ -401,7 +401,7 @@ function OnboardingContent() {
         handleObsidianUpload();
       } else {
         // Skip to chat instead of going to step 3
-        router.push("/chat");
+        router.push("/search");
       }
     } else {
       setCurrentStep(currentStep + 1);
@@ -414,12 +414,12 @@ function OnboardingContent() {
     } else if (smartCategorizationEnabled) {
       startCompleteImportProcess();
     } else {
-      router.push("/chat");
+      router.push("/search");
     }
   };
 
   const handleSkip = () => {
-    router.push("/chat");
+    router.push("/search");
   };
 
   const toggleTool = async (tool) => {
@@ -1193,7 +1193,7 @@ function OnboardingContent() {
                   localStorage.setItem("onboardingCompleted", "true");
 
                   // Redirect to chat page
-                  window.location.href = "/chat";
+                  window.location.href = "/search";
                 }}
                 className="px-6 py-2 rounded-lg text-white border border-[#9334E9] bg-[#9334E9] hover:bg-[#3c1671] hover:border-[#6D28D9] transition-colors flex items-center gap-2"
               >

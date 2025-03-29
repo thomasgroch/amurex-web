@@ -36,7 +36,7 @@ export function Navbar() {
         className="text-4xl cursor-pointer" 
         role="img" 
         aria-label="Amurex logo"
-        onClick={() => router.push('/chat')}
+        onClick={() => router.push('/search')}
       >
         <img 
           src="/amurex.png" 
@@ -48,10 +48,10 @@ export function Navbar() {
       <div className="flex flex-col items-center space-y-8 mb-4">
         <div className="relative group">
           <Button 
-            variant={isActive('/chat') ? "active-navbar" : "navbar"} 
+            variant={isActive('/search') ? "active-navbar" : "navbar"} 
             size="icon" 
-            onClick={() => router.push('/chat')}
-            className={isActive('/chat') ? "bg-[#3c1671] border border-[#6D28D9]" : ""}
+            onClick={() => router.push('/search')}
+            className={isActive('/search') ? "bg-[#3c1671] border border-[#6D28D9]" : ""}
           >
             <Search className="h-6 w-6" style={{ color: "var(--color-4)" }} />
           </Button>

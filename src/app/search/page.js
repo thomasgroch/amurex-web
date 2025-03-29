@@ -227,7 +227,7 @@ export default function AISearch() {
         }
 
         // Send the documents to the backend
-        const response = await fetch("/api/chat", {
+        const response = await fetch("/api/search_deprecated", {
           method: "POST",
           body: JSON.stringify({
             documents: data,
@@ -272,7 +272,7 @@ export default function AISearch() {
       answer: "",
     });
 
-    fetch("/api/chat", {
+    fetch("/api/search_deprecated", {
       method: "POST",
       body: JSON.stringify({
         message,
@@ -429,6 +429,9 @@ export default function AISearch() {
             </div>
           )}
 
+          <h1 className="text-xl md:text-2xl font-medium text-white mb-4">
+            Knowledge Search
+          </h1>
           <div className="bg-zinc-900/70 rounded-lg border border-zinc-800 relative">
             <div className="p-4 md:p-6 border-b border-zinc-800">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -686,7 +689,7 @@ export default function AISearch() {
           {/* Suggested prompts moved outside the main box */}
           {!isSearchInitiated && (
             <div className="mt-6 space-y-2">
-              <div className="text-zinc-500 text-md">Personalized searches</div>
+              <div className="text-zinc-500 text-md">Personalized prompt suggestions</div>
               <div className="flex flex-col gap-3">
                 {suggestedPrompts.length === 0 ? (
                   <>

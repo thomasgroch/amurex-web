@@ -173,19 +173,35 @@ export default function TranscriptDetail({ params }) {
     }
   };
 
-  const handleCopyLink = () => {
-    const link = `${window.location.host}/shared/${params.id}`;
-    navigator.clipboard.writeText(link)
-      .then(async () => {
-        console.log('Link copied to clipboard');
-        setCopyButtonText("Copied!"); // Change button text
-        setTimeout(() => setCopyButtonText("Copy URL"), 3000); // Revert text after 3 seconds
+  const handleCopyLink = async () => {
+    try {
+      // Get the user's email
+      const { data: userData, error: userError } = await supabase
+        .from('users')
+        .select('email')
+        .eq('id', session.user.id)
+        .single();
+      
+      if (userError) throw userError;
+      
+      const userEmail = userData.email;
+      const baseLink = `${window.location.host.includes('localhost') ? 'http://' : 'https://'}${window.location.host}/shared/${params.id}`;
+      const shareText = `Sharing my meeting notes with you: ${baseLink}`;
+      
+      navigator.clipboard.writeText(shareText)
+        .then(async () => {
+          console.log('Link copied to clipboard');
+          setCopyButtonText("Copied!"); // Change button text
+          setTimeout(() => setCopyButtonText("Copy URL"), 3000); // Revert text after 3 seconds
 
-        await logUserAction(session.user.id, 'web_share_url_copied');
-      })
-      .catch(err => {
-        console.error('Failed to copy the URL: ', err);
-      });
+          await logUserAction(session.user.id, 'web_share_url_copied');
+        })
+        .catch(err => {
+          console.error('Failed to copy the URL: ', err);
+        });
+    } catch (error) {
+      console.error('Error getting user email:', error);
+    }
   };
 
   const handleDownload = async () => {
@@ -337,7 +353,15 @@ export default function TranscriptDetail({ params }) {
         <div className="p-6 max-w-7xl mx-auto">
           {/* Modal Component */}
           {isModalOpen && (
-            <div className="px-2 fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div 
+              className="px-2 fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+              onClick={(e) => {
+                // Close modal only if the background (not the modal content) is clicked
+                if (e.target === e.currentTarget) {
+                  toggleModal();
+                }
+              }}
+            >
               <div className="bg-black bg-opacity-40 backdrop-blur-sm p-8 rounded-lg shadow-lg border border-white/20">
                 <h2 className="lg:text-xl text-md font-medium mb-4 text-white">Share notes from <b>{transcript.title}</b></h2>
                 
@@ -349,18 +373,16 @@ export default function TranscriptDetail({ params }) {
                       type="text"
                       value={emailInput}
                       onChange={handleEmailInputChange}
-                      onKeyDown={isMobile ? undefined : handleEmailInputKeyDown}
-                      placeholder={isMobile ? "Enter emails" : "Enter emails and press enter"}
+                      onKeyDown={handleEmailInputKeyDown}
+                      placeholder="Enter emails"
                       className="w-full mt-2 p-2 border rounded bg-transparent text-white text-sm lg:text-md"
                     />
-                    {isMobile && (
-                      <button
-                        onClick={addEmail}
-                        className="ml-2 mt-2 p-2 bg-[#9334E9] text-white rounded"
-                      >
-                        <Plus />
-                      </button>
-                    )}
+                    <button
+                      onClick={addEmail}
+                      className="ml-2 mt-2 p-2 bg-[#9334E9] text-white rounded"
+                    >
+                      <Plus />
+                    </button>
                   </div>
                   
                   {emails.length > 0 && (
@@ -410,7 +432,7 @@ export default function TranscriptDetail({ params }) {
                   <p className="text-white lg:text-md text-sm font-semibold">Or copy the invite URL</p>
                   <input
                     type="text"
-                    value={`${window.location.host}/shared/${params.id}`}
+                    value={`${window.location.host.includes('localhost') ? 'http://' : 'https://'}${window.location.host}/shared/${params.id}`}
                     readOnly
                     className="w-full mt-2 p-2 border rounded bg-transparent text-white lg:text-md text-sm"
                   />

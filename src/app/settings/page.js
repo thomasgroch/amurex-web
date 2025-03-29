@@ -1124,9 +1124,9 @@ function SettingsContent() {
                         Memory
                       </h2>
                       <p className="text-sm text-zinc-400">
-                        Enable memory and connect your documents to unlock our{" "}
-                        <b>AI-powered memory chat feature</b>, allowing you to
-                        have intelligent conversations about your content
+                        Enable memory storing to unlock our{" "}
+                        <b>AI-powered knowledge search feature</b>, allowing you to
+                        have intelligent conversations about your past meetings, emails, documents, and more
                       </p>
                     </div>
                     <Switch

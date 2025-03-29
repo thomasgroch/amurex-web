@@ -14,7 +14,7 @@ export const ImportCompleteEmailGoogle = ({ documents }) => {
       </ul>
       <p>
         You can now access these documents in your Amurex workspace at{" "}
-        <a href="https://app.amurex.ai/chat">app.amurex.ai/chat</a>
+        <a href="https://app.amurex.ai/search">app.amurex.ai/search</a>
       </p>
     </div>
   );
@@ -32,7 +32,7 @@ export const ImportCompleteEmailNotion = ({ documents }) => {
       </ul>
       <p>
         You can now access these documents in your Amurex workspace at{" "}
-        <a href="https://app.amurex.ai/chat">app.amurex.ai/chat</a>
+        <a href="https://app.amurex.ai/search">app.amurex.ai/search</a>
       </p>
     </div>
   );
@@ -50,7 +50,7 @@ export const ImportCompleteEmailObsidian = ({ documents }) => {
       </ul>
       <p>
         You can now access these documents in your Amurex workspace at{" "}
-        <a href="https://app.amurex.ai/chat">app.amurex.ai/chat</a>
+        <a href="https://app.amurex.ai/search">app.amurex.ai/search</a>
       </p>
     </div>
   );

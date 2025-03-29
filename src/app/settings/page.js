@@ -1091,11 +1091,11 @@ function SettingsContent() {
                             );
 
                             // Navigate to chat page
-                            router.push("/chat");
+                            router.push("/search");
                           } catch (error) {
                             console.error("Analytics error:", error);
                             // Still navigate even if analytics fails
-                            router.push("/chat");
+                            router.push("/search");
                           }
                         }}
                       >

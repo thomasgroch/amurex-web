@@ -1067,10 +1067,10 @@ function SettingsContent() {
                       <MessageSquare className="w-6 h-6 text-[#9334E9]" />
                       <div>
                         <h3 className="font-medium text-white text-lg">
-                          Memory Chat (new!)
+                          Knowledge Search (new!)
                         </h3>
                         <p className="text-sm text-zinc-400">
-                          Try our new memory chat feature
+                          Try our new feature - search your emails, documents, notes, and more
                         </p>
                       </div>
                     </div>

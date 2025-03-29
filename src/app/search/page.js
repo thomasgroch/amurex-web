@@ -227,7 +227,7 @@ export default function AISearch() {
         }
 
         // Send the documents to the backend
-        const response = await fetch("/api/search_deprecated", {
+        const response = await fetch("/api/search", {
           method: "POST",
           body: JSON.stringify({
             documents: data,
@@ -272,7 +272,7 @@ export default function AISearch() {
       answer: "",
     });
 
-    fetch("/api/search_deprecated", {
+    fetch("/api/search", {
       method: "POST",
       body: JSON.stringify({
         message,

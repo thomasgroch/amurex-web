@@ -29,15 +29,25 @@ export default function SignUp() {
   let signinRedirect = `/web_app/signin${redirectUrl ? `?redirect=${encodeURIComponent(redirectUrl)}` : ''}`;
 
   const createUserEntry = async (userId) => {
-    const { data, error } = await supabase
+    // First check if user already exists
+    const { data: existingUser } = await supabase
       .from("users")
-      .insert([{ id: userId, email: email }]);
+      .select("*")
+      .eq("id", userId)
+      .single();
+    
+    // Only insert if user doesn't exist
+    if (!existingUser) {
+      const { data, error } = await supabase
+        .from("users")
+        .insert([{ id: userId, email: email }]);
 
-    if (error) {
-      console.error("Error creating user entry:", error);
-      setMessage(
-        "Account created, but there was an error setting up your profile. Please contact support."
-      );
+      if (error) {
+        console.error("Error creating user entry:", error);
+        setMessage(
+          "Account created, but there was an error setting up your profile. Please contact support."
+        );
+      }
     }
   };
 
@@ -102,8 +112,12 @@ export default function SignUp() {
         console.error("Error sending email to external endpoint:", err);
       }
 
-      // Redirect to the original URL if it exists, otherwise to /meetings
-      router.push(redirectUrl || "/search");
+      // Log the redirect destination for debugging
+      const destination = redirectUrl || "/search";
+      console.log("Attempting to redirect to:", destination);
+      
+      // Try a more direct approach to redirection
+      window.location.href = destination;
     } else {
       setMessage("An unexpected error occurred. Please try again.");
     }

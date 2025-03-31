@@ -20,22 +20,27 @@ export default function SignUp() {
   // Add useEffect to get redirect URL from query params
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const redirect = params.get('redirect');
+    const redirect = params.get("redirect");
     if (redirect) {
       setRedirectUrl(decodeURIComponent(redirect));
     }
   }, []);
 
-  let signinRedirect = `/web_app/signin${redirectUrl ? `?redirect=${encodeURIComponent(redirectUrl)}` : ''}`;
+  let signinRedirect = `/web_app/signin${
+    redirectUrl ? `?redirect=${encodeURIComponent(redirectUrl)}` : ""
+  }`;
 
   const createUserEntry = async (userId) => {
     // First check if user already exists
-    const { data: existingUser } = await supabase
+    const { data: existingUser, error } = await supabase
       .from("users")
       .select("*")
       .eq("id", userId)
       .single();
-    
+
+    console.log("This is the existing user", existingUser);
+    console.log("This is the error", error);
+
     // Only insert if user doesn't exist
     if (!existingUser) {
       const { data, error } = await supabase
@@ -86,9 +91,7 @@ export default function SignUp() {
       });
 
       await createUserEntry(data.user.id);
-      setMessage(
-        "Account created successfully!"
-      );
+      setMessage("Account created successfully!");
 
       // Send email to external endpoint
       try {
@@ -97,9 +100,9 @@ export default function SignUp() {
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ 
-            "email": email,
-            "type": "signup"
+          body: JSON.stringify({
+            email: email,
+            type: "signup",
           }),
         });
 
@@ -115,7 +118,7 @@ export default function SignUp() {
       // Log the redirect destination for debugging
       const destination = redirectUrl || "/search";
       console.log("Attempting to redirect to:", destination);
-      
+
       // Try a more direct approach to redirection
       window.location.href = destination;
     } else {
@@ -163,7 +166,7 @@ export default function SignUp() {
           <hr className="mb-6 border-gray-800" />
 
           <form onSubmit={handleSignUp} className="space-y-4 md:space-y-6">
-          <div className="flex gap-4">
+            <div className="flex gap-4">
               <div className="flex-1">
                 <label className="block text-sm font-medium font-semibold text-white mb-1">
                   First Name

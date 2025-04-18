@@ -4,10 +4,22 @@ import { google } from 'googleapis';
 import OpenAI from 'openai';
 import { createClient } from "@supabase/supabase-js";
 
+// Create admin Supabase client globally
+const adminSupabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
 // Initialize Groq client using OpenAI SDK
 const groq = new OpenAI({
   apiKey: process.env.GROQ_API_KEY,
   baseURL: "https://api.groq.com/openai/v1",
+});
+
+// Initialize Mistral client using OpenAI SDK
+const mistral = new OpenAI({
+  apiKey: process.env.MISTRAL_API_KEY,
+  baseURL: "https://api.mistral.ai/v1",
 });
 
 // Gmail label colors
@@ -153,6 +165,35 @@ async function getOAuth2Client(userId) {
   }
 }
 
+// Helper function to generate embeddings using Mistral
+async function generateEmbeddings(text) {
+  try {
+    // Ensure we have some text to embed
+    if (!text || text.trim() === '') {
+      console.warn("Empty text provided for embedding");
+      return null;
+    }
+    
+    // Truncate text if it's too long (Mistral has token limits)
+    const truncatedText = text.length > 8000 ? text.substring(0, 8000) : text;
+    
+    const response = await mistral.embeddings.create({
+      model: "mistral-embed",
+      input: truncatedText,
+    });
+    
+    if (response && response.data && response.data[0] && response.data[0].embedding) {
+      return response.data[0].embedding;
+    } else {
+      console.error("Invalid embedding response structure:", response);
+      return null;
+    }
+  } catch (error) {
+    console.error("Error generating embeddings:", error);
+    return null;
+  }
+}
+
 // Update the processEmails function to skip already processed emails
 async function processEmails(emails, userId, labelId, labelName, labelColor) {
   const results = [];
@@ -263,6 +304,97 @@ async function processEmails(emails, userId, labelId, labelName, labelColor) {
   return results;
 }
 
+// Update storeEmailInDatabase function to include embeddings
+async function storeEmailInDatabase(userId, messageId, threadId, sender, subject, content, receivedAt, isRead, snippet) {
+  // Check if email already exists in the database
+  const { data: existingEmail } = await adminSupabase
+    .from('emails')
+    .select('id')
+    .eq('user_id', userId)
+    .eq('message_id', messageId)
+    .maybeSingle();
+    
+  if (!existingEmail) {
+    // Generate embeddings for the email content or at least the subject
+    let embedding = null;
+    let textToEmbed = "";
+    
+    if (content && content.trim() !== '') {
+      // Combine subject and content for better semantic representation
+      textToEmbed = `Subject: ${subject}\n\n${content}`;
+    } else if (subject && subject.trim() !== '') {
+      // If no content, at least embed the subject
+      textToEmbed = `Subject: ${subject}`;
+      console.log(`No content for email ${messageId}, embedding subject only`);
+    } else if (snippet && snippet.trim() !== '') {
+      // If no subject or content, try using the snippet
+      textToEmbed = snippet;
+      console.log(`No subject or content for email ${messageId}, embedding snippet only`);
+    }
+    
+    // Only try to generate embeddings if we have some text
+    if (textToEmbed.trim() !== '') {
+      embedding = await generateEmbeddings(textToEmbed);
+    }
+    
+    // Insert email into database
+    const emailData = {
+      user_id: userId,
+      message_id: messageId,
+      thread_id: threadId,
+      sender: sender,
+      subject: subject,
+      content: content,
+      received_at: receivedAt.toISOString(),
+      created_at: new Date().toISOString(),
+      is_read: isRead,
+      snippet: snippet,
+    };
+    
+    // Add embedding if available
+    if (embedding) {
+      emailData.embedding = embedding;
+    }
+    
+    console.log(`Storing email in database:`, {
+      message_id: messageId,
+      thread_id: threadId,
+      subject: subject,
+      content_length: content ? content.length : 0,
+      has_embedding: embedding ? true : false,
+      embedded_text: textToEmbed ? (textToEmbed.length > 50 ? textToEmbed.substring(0, 50) + '...' : textToEmbed) : 'none'
+    });
+    
+    const { error: insertError } = await adminSupabase
+      .from('emails')
+      .insert(emailData);
+      
+    if (insertError) {
+      console.error("Error inserting email into database:", insertError);
+      
+      // Check if the error is related to the category or is_categorized column
+      if (insertError.message && (insertError.message.includes('category') || insertError.message.includes('is_categorized'))) {
+        // Try again without those fields
+        delete emailData.category;
+        delete emailData.is_categorized;
+        
+        const { error: retryError } = await adminSupabase
+          .from('emails')
+          .insert(emailData);
+          
+        if (retryError) {
+          console.error("Error inserting email with simplified fields:", retryError);
+        } else {
+          console.log(`Email ${messageId} stored in database with simplified fields`);
+        }
+      }
+    } else {
+      console.log(`Email ${messageId} stored in database successfully`);
+    }
+  }
+  return !existingEmail; // Return true if we inserted a new email
+}
+
 export async function POST(req) {
   try {
     const requestData = await req.json();
@@ -274,21 +406,24 @@ export async function POST(req) {
       return NextResponse.json({ success: false, error: "User ID is required" }, { status: 400 });
     }
 
-    // Create Supabase client with service role key for admin access
-    const adminSupabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL,
-      process.env.SUPABASE_SERVICE_ROLE_KEY,
-      {
-        global: {
-          headers: accessToken ? {
-            Authorization: `Bearer ${accessToken}`,
-          } : undefined,
-        },
-      }
-    );
+    // Update the admin Supabase client with the access token if provided
+    let currentAdminSupabase = adminSupabase;
+    if (accessToken) {
+      currentAdminSupabase = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL,
+        process.env.SUPABASE_SERVICE_ROLE_KEY,
+        {
+          global: {
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+            },
+          },
+        }
+      );
+    }
 
     // Fetch user's Google credentials and email tagging settings using admin Supabase client
-    const { data: userData, error: userError } = await adminSupabase
+    const { data: userData, error: userError } = await currentAdminSupabase
       .from("users")
       .select("google_refresh_token, email_tagging_enabled, email_categories")
       .eq("id", userId)
@@ -445,7 +580,7 @@ export async function POST(req) {
       }
 
       // Create a set of already processed message IDs to avoid duplicates
-      const { data: processedEmails, error: processedError } = await adminSupabase
+      const { data: processedEmails, error: processedError } = await currentAdminSupabase
         .from('emails')
         .select('message_id')
         .eq('user_id', userId);
@@ -659,68 +794,6 @@ export async function POST(req) {
         } catch (dbError) {
           console.error("Database error while storing email:", dbError);
         }
-      }
-      
-      // Helper function to store email in database
-      async function storeEmailInDatabase(userId, messageId, threadId, sender, subject, content, receivedAt, isRead, snippet) {
-        // Check if email already exists in the database
-        const { data: existingEmail } = await adminSupabase
-          .from('emails')
-          .select('id')
-          .eq('user_id', userId)
-          .eq('message_id', messageId)
-          .maybeSingle();
-          
-        if (!existingEmail) {
-          // Insert email into database
-          const emailData = {
-            user_id: userId,
-            message_id: messageId,
-            thread_id: threadId,
-            sender: sender,
-            subject: subject,
-            content: content,
-            received_at: receivedAt.toISOString(),
-            created_at: new Date().toISOString(),
-            is_read: isRead,
-            snippet: snippet,
-          };
-          
-          console.log(`Storing email in database:`, {
-            message_id: messageId,
-            thread_id: threadId,
-            subject: subject,
-            content_length: content ? content.length : 0
-          });
-          
-          const { error: insertError } = await adminSupabase
-            .from('emails')
-            .insert(emailData);
-            
-          if (insertError) {
-            console.error("Error inserting email into database:", insertError);
-            
-            // Check if the error is related to the category or is_categorized column
-            if (insertError.message && (insertError.message.includes('category') || insertError.message.includes('is_categorized'))) {
-              // Try again without those fields
-              delete emailData.category;
-              delete emailData.is_categorized;
-              
-              const { error: retryError } = await adminSupabase
-                .from('emails')
-                .insert(emailData);
-                
-              if (retryError) {
-                console.error("Error inserting email with simplified fields:", retryError);
-              } else {
-                console.log(`Email ${messageId} stored in database with simplified fields`);
-              }
-            }
-          } else {
-            console.log(`Email ${messageId} stored in database successfully`);
-          }
-        }
-        return !existingEmail; // Return true if we inserted a new email
       }
       
       return NextResponse.json({ 

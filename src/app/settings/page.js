@@ -26,6 +26,7 @@ import {
 import Cookies from "js-cookie";
 import { Navbar } from "@/components/Navbar";
 import { toast } from "react-hot-toast";
+import MobileWarningBanner from "@/components/MobileWarningBanner";
 
 const PROVIDER_ICONS = {
   google:
@@ -1027,8 +1028,11 @@ function SettingsContent() {
     }
   };
 
+  // Update the return statement to use the imported component
   return (
     <div className="flex min-h-screen bg-black text-white">
+      <MobileWarningBanner />
+      
       {/* Left App Navbar - the thin one */}
       <div className="w-16 flex-shrink-0 bg-black border-r border-zinc-800">
         <Navbar />

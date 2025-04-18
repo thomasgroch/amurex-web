@@ -14,6 +14,7 @@ import { supabase } from "@/lib/supabaseClient";
 import { Navbar } from "@/components/Navbar";
 import StarButton from "@/components/star-button";
 import { useRouter } from "next/navigation";
+import MobileWarningBanner from "@/components/MobileWarningBanner";
 
 const BASE_URL_BACKEND = "https://api.amurex.ai";
 
@@ -454,6 +455,7 @@ export default function AISearch() {
   // 12. Render home component
   return (
     <>
+      <MobileWarningBanner />
       <Navbar />
       <div
         className={`min-h-screen bg-black lg:ml-[4rem] ${

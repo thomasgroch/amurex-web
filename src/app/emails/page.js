@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Card, CardContent } from "@/components/ui/card";
 import { Video } from "lucide-react";
 import { Button } from "@/components/ui/Button";
+import MobileWarningBanner from "@/components/MobileWarningBanner";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -222,6 +223,7 @@ function EmailsContent() {
 
   return (
     <div className="flex min-h-screen bg-black">
+      <MobileWarningBanner />
       <Navbar />
 
       {/* Main Content Area */}

@@ -66,15 +66,16 @@ export async function GET(request) {
 
     console.log('tokens', tokens);
 
-    // Store tokens in database by updating the existing user
+    // Store tokens in database and assign the Google client to this user
+    // This is now the ONLY place where we assign clients to users, ensuring it only happens on successful auth
     const { error: tokenError } = await supabase
       .from('users')
       .update({
         google_access_token: tokens.access_token,
         google_refresh_token: tokens.refresh_token,
         google_token_expiry: new Date(tokens.expiry_date).toISOString(),
-        google_token_version: clientType,
-        google_cohort: clientId
+        google_token_version: clientType,  // Assigns the client type to the user
+        google_cohort: clientId            // Assigns the specific client to the user
       })
       .eq('id', userId);
 
@@ -83,8 +84,19 @@ export async function GET(request) {
       throw tokenError;
     }
 
-    // Remove the second update since we're doing it all in one operation
-    console.log('Google connection successful for user:', userId);
+    // Increment the user_count for this client after successful token exchange and assignment
+    // This ensures we only count users who complete the full OAuth flow
+    console.log('Incrementing client user count for client:', clientId);
+    const { error: countError } = await supabase.rpc('increment_google_client_user_count', {
+      client_id_param: clientId
+    });
+    
+    if (countError) {
+      console.error('Error incrementing client user count:', countError);
+      // Continue anyway since this is not critical
+    }
+
+    console.log('Google connection successful for user:', userId, 'with client:', clientId, 'of type:', clientType);
 
     // Determine redirect URL based on source
     let redirectUrl;

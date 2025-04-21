@@ -71,18 +71,6 @@ async function getOAuth2Client(userId, { upgradeToFull = false } = {}) {
       
       clientData = result.data;
       clientError = result.error;
-
-      // Increment the users_count for this client
-      if (clientData && !clientError) {
-        const { error: countError } = await supabase.rpc('increment_google_client_user_count', {
-          client_id_param: clientData.id
-        });
-        
-        if (countError) {
-          console.error('Error incrementing client user count:', countError);
-          // Continue anyway since this is not critical
-        }
-      }
     } 
     // If user's token version is 'gmail_only' and they're trying to upgrade to 'full'
     else if (userData.google_token_version === 'gmail_only' && upgradeToFull) {
@@ -133,18 +121,6 @@ async function getOAuth2Client(userId, { upgradeToFull = false } = {}) {
       
       clientData = result.data;
       clientError = result.error;
-      
-      // Increment the users_count for this client
-      if (clientData && !clientError) {
-        const { error: countError } = await supabase.rpc('increment_google_client_user_count', {
-          client_id_param: clientData.id
-        });
-        
-        if (countError) {
-          console.error('Error incrementing client user count:', countError);
-          // Continue anyway since this is not critical
-        }
-      }
     }
 
     if (clientError) throw clientError;
@@ -242,29 +218,11 @@ export async function POST(request) {
       state: state
     });
     
-    // Update the user's google_cohort and google_token_version to match the client we're using
-    const { error: updateError } = await supabase
-      .from('users')
-      .update({ 
-        google_cohort: clientInfo.id,
-        google_token_version: clientInfo.type
-      })
-      .eq('id', userId);
+    // We no longer update the user's google_cohort and google_token_version here
+    // This is now done in the callback route after successful authentication
     
-    if (updateError) {
-      console.error('Error updating user google_cohort:', updateError);
-      // Continue anyway since the auth URL is still valid
-    }
-    
-    // Increment the user_count for this client
-    const { error: countError } = await supabase.rpc('increment_google_client_user_count', {
-      client_id_param: clientInfo.id
-    });
-    
-    if (countError) {
-      console.error('Error incrementing client user count:', countError);
-      // Continue anyway since this is not critical
-    }
+    // We no longer increment the user count here
+    // The count is now incremented in the callback route after successful authentication
     
     return NextResponse.json({ success: true, url: authUrl });
   } catch (error) {

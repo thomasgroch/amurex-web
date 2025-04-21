@@ -193,14 +193,26 @@ export async function POST(req) {
         const cleanedSources = sources.map(source => {
           if (source.content) {
             return {
-              ...source,
+              source: source.source,
+              title: source.title,
               content: source.content
-                .replace(/[\r\n\x0B\x0C\u2028\u2029]+/g, ' ') // Replace all types of newlines with a space
-                .replace(/\s+/g, ' ')                          // Replace multiple spaces with a single space
-                .trim()                                         // Remove leading/trailing whitespace
+                .replace(/[\r\n\x0B\x0C\u2028\u2029]{3,}/g, '\n\n') // Replace 3+ consecutive newlines with double newline
+                .replace(/[\r\n\x0B\x0C\u2028\u2029]{2}/g, '\n\n')  // Normalize double newlines
+                .replace(/[\r\n\x0B\x0C\u2028\u2029]/g, '\n')      // Normalize single newlines
+                .replace(/\s+\n/g, '\n')                           // Remove spaces before newlines
+                .replace(/\n\s+/g, '\n')                           // Remove spaces after newlines
+                .trim(),                                            // Remove leading/trailing whitespace
+              url: source.url,
+              type: source.type
             };
           }
-          return source;
+          return {
+            source: source.source,
+            title: source.title,
+            content: source.content,
+            url: source.url,
+            type: source.type
+          };
         });
 
         // Check if we have an AI response from the API

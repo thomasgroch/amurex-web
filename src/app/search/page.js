@@ -741,7 +741,7 @@ export default function AISearch() {
                   <div className="grid grid-cols-1 lg:grid-cols-[2fr,1fr] gap-6">
                     <div>
                       <div className="flex justify-between items-center mb-3">
-                        <Heading content="Answer" />
+                        {/* <Heading content="Answer" /> */}
                         {!isSearching && searchResults?.query && (
                           <button
                             onClick={() => sendMessage(searchResults.query)}
@@ -1147,8 +1147,8 @@ export const Sources = ({ content = [], filters = {} }) => {
     return (
       <div>
         <div className="text-[#9334E9] font-medium mb-3 text-md md:text-xl flex items-center gap-2">
-          <GitBranch size={20} className="md:w-6 md:h-6" />
-          <span>Sources</span>
+          {/* <GitBranch size={20} className="md:w-6 md:h-6" /> */}
+          {/* <span>Sources</span> */}
         </div>
         <div className="animate-pulse space-y-3">
           {[1, 2, 3].map((_, index) => (
@@ -1183,10 +1183,10 @@ export const Sources = ({ content = [], filters = {} }) => {
   return (
     <div>
       <div className="text-[#9334E9] font-medium mb-3 text-md md:text-xl flex items-center gap-2">
-        <GitBranch size={20} className="md:w-6 md:h-6" />
-        <span>Sources</span>
+        {/* <GitBranch size={20} className="md:w-6 md:h-6" /> */}
+        {/* <span>Sources</span> */}
       </div>
-      <div className="grid grid-cols-1 gap-2">
+      <div className="grid grid-cols-1 gap-2 pt-8">
         {Array.isArray(filteredSources) &&
           filteredSources.map((source, index) => {
             return (
@@ -1358,12 +1358,18 @@ const GPT = ({ content = "" }) => {
   return (
     <div ref={contentRef}>
       <ReactMarkdown
-        className="prose text-base md:text-xl mt-1 w-full break-words prose-p:leading-relaxed"
+        className="prose text-base md:text-xl mt-1 w-full break-words prose-p:leading-relaxed prose-p:mb-4"
         remarkPlugins={[remarkGfm]}
         components={{
           a: ({ node, ...props }) => (
-            <a {...props} style={{ color: "blue", fontWeight: "bold" }} />
+            <a 
+              {...props} 
+              className="text-[#9334E9] font-medium hover:text-[#7928CA] underline transition-colors" 
+              target="_blank"
+              rel="noopener noreferrer"
+            />
           ),
+          p: ({ node, ...props }) => <p className="mb-4" {...props} />,
         }}
       >
         {content}

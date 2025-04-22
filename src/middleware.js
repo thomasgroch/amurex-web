@@ -31,7 +31,7 @@ export function middleware(request) {
       
       // For OPTIONS requests (preflight), handle these separately
       if (request.method === 'OPTIONS') {
-        responseHeaders.set('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,OPTIONS');
+        responseHeaders.set('Access-Control-Allow-Methods', 'GET,POST,PUT,DELETE,PATCH,OPTIONS');
         responseHeaders.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
         responseHeaders.set('Access-Control-Max-Age', '86400'); // 24 hours
         

@@ -8,7 +8,6 @@ import { Switch } from "@/components/ui/switch";
 import { supabase } from "@/lib/supabaseClient";
 import styles from './TranscriptDetail.module.css';
 import { Plus, Minus } from 'lucide-react';
-import { Navbar } from '@/components/Navbar';
 import ReactMarkdown from 'react-markdown';
 
 
@@ -318,8 +317,8 @@ export default function TranscriptDetail({ params }) {
   if (loading) {
     return (
       <div className="min-h-screen bg-[#09090B]">
-        <div className="p-6 max-w-7xl mx-auto">
-          <h1 className="text-2xl font-bold text-white">Loading...</h1>
+        <div className="p-6 mx-auto">
+          <h1 className="text-xl font-normal text-white">Loading...</h1>
         </div>
       </div>
     )
@@ -328,7 +327,7 @@ export default function TranscriptDetail({ params }) {
   if (error || !transcript) {
     return (
       <div className="min-h-screen bg-[#09090B]">
-        <div className="p-6 max-w-7xl mx-auto">
+        <div className="p-6 mx-auto">
           <div className="bg-[#1C1C1E] rounded-lg p-6">
             <h1 className="text-red-500 text-xl mb-4">
               {error || "Transcript not found"}
@@ -348,9 +347,8 @@ export default function TranscriptDetail({ params }) {
 
   return (
     <>
-      <Navbar />
-      <div className="min-h-screen bg-black lg:ml-[4rem]">
-        <div className="p-6 max-w-7xl mx-auto">
+      <div className="min-h-screen bg-black">
+        <div className="p-6 mx-auto">
           {/* Modal Component */}
           {isModalOpen && (
             <div 
@@ -497,6 +495,7 @@ export default function TranscriptDetail({ params }) {
           </div>
 
           <div className="bg-[#09090A] rounded-lg border border-zinc-800">
+          {/* <div className="bg-zinc-900/70 rounded-lg border border-zinc-800"> */}
             <div className="p-6 border-b border-zinc-800 hidden lg:block">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-3">

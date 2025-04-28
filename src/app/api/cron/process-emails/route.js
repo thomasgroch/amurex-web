@@ -29,7 +29,8 @@ export async function GET(req) {
       .from("users")
       .select("id, email_tagging_enabled")
       .eq("email_tagging_enabled", true)
-      .not("google_refresh_token", "is", null);
+      .not("google_refresh_token", "is", null)
+      .order("created_at", { ascending: false });
 
     if (usersError) {
       console.error("Error fetching users:", usersError);

@@ -627,8 +627,6 @@ function EmailsContent() {
                           <div className="mt-4">
                             <a
                               href="/settings"
-                              target="_blank"
-                              rel="noopener noreferrer"
                               className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium border border-white/10 bg-[#9334E9] text-[#FAFAFA] hover:bg-[#3c1671] hover:border-[#6D28D9] transition-colors duration-200"
                             >
                               Connect Google account

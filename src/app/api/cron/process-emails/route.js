@@ -15,7 +15,7 @@ export const revalidate = 0;
 export const runtime = 'nodejs';
 
 // Vercel Cron configuration - updated to run every hour
-export const schedule = "0 * * * *"; // Cron syntax: at minute 0 of every hour
+export const schedule = "*/15 * * * *"; // Cron syntax: every 15 minutes
 
 // Helper function to validate token by making a simple API call
 async function validateGmailAccess(userId, refreshToken, clientsMap) {

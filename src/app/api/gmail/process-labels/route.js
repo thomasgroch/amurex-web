@@ -658,7 +658,7 @@ export async function POST(req) {
       const messages = await gmail.users.messages.list({
         userId: 'me',
         q: 'is:unread -category:promotions -in:sent',  // Exclude promotions and sent mail
-        maxResults: 10  // Fetch up to 100 emails
+        maxResults: 2  // Fetch 2 emails every 15 minutes
       });
       
       if (!messages.data.messages || messages.data.messages.length === 0) {

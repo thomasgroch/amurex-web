@@ -28,6 +28,7 @@ function EmailsContent() {
   const [emailTaggingEnabled, setEmailTaggingEnabled] = useState(false);
   const [hasEmailRecord, setHasEmailRecord] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
+  const [processingComplete, setProcessingComplete] = useState(false);
   const [categories, setCategories] = useState({
     categories: {
       to_respond: true,
@@ -153,6 +154,7 @@ function EmailsContent() {
   const processGmailLabels = async () => {
     try {
       setIsProcessingEmails(true);
+      setProcessingComplete(false);
       const response = await fetch('/api/gmail/process-labels', {
         method: 'POST',
         headers: {
@@ -160,12 +162,13 @@ function EmailsContent() {
         },
         body: JSON.stringify({
           userId,
-          useStandardColors: false
+          maxEmails: 20
         }),
       });
 
       const data = await response.json();
       if (data.success) {
+        setProcessingComplete(true);
         toast.success(`Successfully processed ${data.processed} emails`);
       } else {
         throw new Error(data.error);
@@ -271,34 +274,51 @@ function EmailsContent() {
                         onChange={handleEmailTaggingToggle}
                       />
                     </div>
-                    {emailTaggingEnabled && (
+                  </div>
+                </div>
+                {emailTaggingEnabled && (
+                  <div className="flex items-center gap-2 mx-6">
+                    <Button
+                      variant="outline"
+                      className="font-normal bg-[#9334E9] text-white hover:bg-[#3c1671] hover:border-[#9334E9] border border-zinc-700 px-4 py-2"
+                      onClick={processGmailLabels}
+                      disabled={isProcessingEmails}
+                    >
+                      {isProcessingEmails ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                          <span>Processing...</span>
+                        </>
+                      ) : (
+                        <div className="flex items-center">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/>
+                          </svg>
+                          Process new emails
+                        </div>
+                      )}
+                    </Button>
+                    
+                    {processingComplete && (
                       <Button
                         variant="outline"
-                        className="hidden bg-zinc-900 text-zinc-300 hover:bg-zinc-800 hover:border-[#9334E9] border border-zinc-700 min-w-[140px] px-4 py-2"
-                        onClick={processGmailLabels}
-                        disabled={isProcessingEmails}
+                        className="font-normal bg-[#9334E9] text-white hover:bg-[#3c1671] hover:border-[#9334E9] border border-zinc-700 px-4 py-2"
+                        onClick={() => window.open("https://mail.google.com", "_blank")}
                       >
-                        {isProcessingEmails ? (
-                          <>
-                            <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#9334E9] mr-2"></div>
-                            <span>Processing...</span>
-                          </>
-                        ) : (
-                          <div className="flex items-center">
-                            <img
-                              src={PROVIDER_ICONS.gmail}
-                              alt="Gmail"
-                              className="w-4 mr-2"
-                            />
-                            Process new emails
-                          </div>
-                        )}
+                        <div className="flex items-center">
+                          <img
+                            src={PROVIDER_ICONS.gmail}
+                            alt="Gmail"
+                            className="w-4 mr-2"
+                          />
+                          Open Gmail
+                        </div>
                       </Button>
                     )}
                   </div>
-                </div>
+                )}
                 <div 
-                  className="flex items-center mx-6 gap-2 px-3 py-1 bg-zinc-700 rounded-md cursor-pointer hover:bg-zinc-900 transition-colors h-fit my-auto"
+                  className="hidden flex items-center mx-6 gap-2 px-3 py-1 bg-zinc-700 rounded-md cursor-pointer hover:bg-zinc-900 transition-colors h-fit my-auto"
                   onClick={() => setShowPreview(!showPreview)}
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="hidden h-4 w-4 text-black" viewBox="0 0 20 20" fill="currentColor">

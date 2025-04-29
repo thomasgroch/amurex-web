@@ -219,7 +219,8 @@ export async function GET(req) {
           },
           body: JSON.stringify({
             userId: userId,
-            useGroq: true  // Add flag to use Groq instead of OpenAI
+            useGroq: true,  // Add flag to use Groq instead of OpenAI
+            maxEmails: 2  // Fetch 2 emails every 15 minutes
           })
         });
         

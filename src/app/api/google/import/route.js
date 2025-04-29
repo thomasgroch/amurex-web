@@ -130,7 +130,7 @@ export async function POST(req) {
           },
           body: JSON.stringify({
             userId: userId,
-            useStandardColors: false,
+            maxEmails: 20
           }),
         }
       );

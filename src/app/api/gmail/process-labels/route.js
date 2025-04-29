@@ -470,6 +470,7 @@ export async function POST(req) {
     const requestData = await req.json();
     const userId = requestData.userId;
     const useStandardColors = requestData.useStandardColors === true;
+    const maxEmails = requestData.maxEmails || 20;
 
     if (!userId) {
       return NextResponse.json({ success: false, error: "User ID is required" }, { status: 400 });
@@ -657,8 +658,8 @@ export async function POST(req) {
       // Fetch recent unread emails - fetch more for storage
       const messages = await gmail.users.messages.list({
         userId: 'me',
-        q: 'is:unread -category:promotions -in:sent',  // Exclude promotions and sent mail
-        maxResults: 2  // Fetch 2 emails every 15 minutes
+        q: '-category:promotions -in:sent',  // Include both read and unread emails, excluding promotions and sent mail
+        maxResults: maxEmails  // Fetch requested amount of emails (or 20) every 15 minutes or when requested
       });
       
       if (!messages.data.messages || messages.data.messages.length === 0) {
@@ -691,34 +692,43 @@ export async function POST(req) {
       let skippedAlreadyProcessed = 0;
       let skippedAlreadyLabeled = 0;
       
-      // First pass: Check which messages need processing (not in database and no Amurex label)
+      // First pass: Check which messages need processing (only skip if both in database AND has Amurex label)
       for (const message of messages.data.messages) {
-        // Skip if already in database
-        if (processedMessageIds.has(message.id)) {
-          skippedAlreadyProcessed++;
-          continue;
+        let skipThisMessage = false;
+        
+        // Check if in database
+        const isInDatabase = processedMessageIds.has(message.id);
+        
+        // Get the message to check labels (only if it's in the database)
+        let hasAmurexLabel = false;
+        
+        if (isInDatabase) {
+          const fullMessageResponse = await gmail.users.messages.get({
+            userId: 'me',
+            id: message.id,
+            format: 'minimal'  // Use minimal format to reduce data transfer
+          });
+          
+          // Check if it has an Amurex label
+          hasAmurexLabel = fullMessageResponse.data.labelIds && 
+            fullMessageResponse.data.labelIds.some(labelId => {
+              // Get the actual label name for this ID if it exists
+              const matchingLabels = labels.data.labels.filter(label => label.id === labelId);
+              if (matchingLabels.length > 0) {
+                return matchingLabels[0].name.includes('Amurex/');
+              }
+              return false;
+            });
+          
+          // Only skip if BOTH conditions are true
+          if (isInDatabase && hasAmurexLabel) {
+            skipThisMessage = true;
+            skippedAlreadyProcessed++;
+          }
         }
         
-        // Get the full message to check labels
-        const fullMessageResponse = await gmail.users.messages.get({
-          userId: 'me',
-          id: message.id,
-          format: 'minimal'  // Use minimal format to reduce data transfer
-        });
-        
-        // Check if it has an Amurex label
-        const hasAmurexLabel = fullMessageResponse.data.labelIds && 
-          fullMessageResponse.data.labelIds.some(labelId => {
-            // Get the actual label name for this ID if it exists
-            const matchingLabels = labels.data.labels.filter(label => label.id === labelId);
-            if (matchingLabels.length > 0) {
-              return matchingLabels[0].name.includes('Amurex/');
-            }
-            return false;
-          });
-        
-        if (hasAmurexLabel) {
-          skippedAlreadyLabeled++;
+        // If we should skip this message, continue to the next one
+        if (skipThisMessage) {
           continue;
         }
 
@@ -726,8 +736,8 @@ export async function POST(req) {
         messagesToProcess.push(message);
       }
       
-      // Filter out already processed messages
-      console.log(`Found ${messages.data.messages.length} unread emails, ${messagesToProcess.length} new to process, ${skippedAlreadyProcessed} already in database, ${skippedAlreadyLabeled} already labeled`);
+      // Update log to be more accurate
+      console.log(`Found ${messages.data.messages.length} emails, ${messagesToProcess.length} to process, ${skippedAlreadyProcessed} skipped (already in database AND labeled)`);
       
       if (messagesToProcess.length === 0) {
         return NextResponse.json({ 
@@ -909,15 +919,25 @@ export async function POST(req) {
           const truncatedBody = body.length > 1500 ? body.substring(0, 1500) + "..." : body;
           category = await categorizeWithAI(fromEmail, subject, truncatedBody, enabledCategories);
           
-          // Apply the label only if a category was assigned
-          if (category && category !== "" && amurexLabels[category]) {
-            await gmail.users.messages.modify({
-              userId: 'me',
-              id: message.id,
-              requestBody: {
-                addLabelIds: [amurexLabels[category]]
-              }
-            });
+          // Map the lowercase category to the proper case in GMAIL_COLORS
+          let labelToApply = null;
+          
+          if (category && category !== "") {
+            // Find the matching label name with proper case from GMAIL_COLORS
+            labelToApply = Object.keys(GMAIL_COLORS).find(
+              key => key.toLowerCase() === category.toLowerCase()
+            );
+            
+            // Apply the label only if a matching category was found
+            if (labelToApply && amurexLabels[labelToApply]) {
+              await gmail.users.messages.modify({
+                userId: 'me',
+                id: message.id,
+                requestBody: {
+                  addLabelIds: [amurexLabels[labelToApply]]
+                }
+              });
+            }
           }
           
           // Add to processed results (only for categorized emails)

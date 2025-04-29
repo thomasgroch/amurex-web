@@ -200,8 +200,7 @@ function SettingsContent() {
         },
         body: JSON.stringify({
           userId: session.user.id,
-          // Allow custom colors to be applied
-          useStandardColors: false,
+          maxEmails: 20
         }),
       });
 
@@ -345,7 +344,7 @@ function SettingsContent() {
           toast.success("Gmail connected successfully!");
           processGmailLabels();
           // Redirect to search page after Gmail connection
-          router.push("/search");
+          router.push("/emails");
         } else if (source === "notion") {
           console.log("Notion connection detected, importing documents");
           toast.success("Notion connected successfully!");
@@ -364,7 +363,7 @@ function SettingsContent() {
             console.log("Google connection detected, but no full access for Docs");
             toast.success("Google account connected successfully!");
             // Redirect to search page even without full access
-            router.push("/search");
+            router.push("/emails");
           }
         }
       });

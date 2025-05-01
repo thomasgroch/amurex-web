@@ -1,0 +1,99 @@
+.sidebar {
+  position: fixed;
+  left: 0;
+  top: 0;
+  height: 100vh;
+  /* background: #000; */
+  backdrop-filter: blur(9px);
+  border-right: 1px solid #27272A;
+  z-index: 300;
+  padding: 18px 10px;
+  color: #fff;
+  min-width: 300px;
+  max-width: 500px;
+  width: 25%;
+  transition: all 0.7s ease;
+  transform: translateX(-100%);
+}
+.sidebarActive {
+  transform: translateX(0%);
+}
+.sidebarTitle {
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: 0.4px;
+}
+
+.sidebarItems {
+  margin-top: 20px;
+}
+.sidebarItem {
+  padding: 16px;
+  border-radius: 9px;
+  border: 1px solid #414144;
+  background: rgba(255, 255, 255, 0.13);
+  cursor: pointer;
+  margin-bottom: 12px;
+  transition: all 0.25s ease;
+}
+.sidebarItem:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.sidebarIcon {
+  position: absolute;
+  right: -65px;
+  top: 15px;
+  width: 50px;
+  height: 50px;
+  background: #111113;
+  border: 1px solid #27272A;
+  border-radius: 8px;
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+.sidebarIcon:hover {
+  background: #17171a;
+}
+.sidebarIcon span {
+  display: block;
+  width: 30px;
+  height: 2px;
+  background: #fff;
+  transition: all 0.3s ease;
+  position: absolute;
+  left: 50%;
+  transition: all 0.7s ease;
+  will-change: transform;
+}
+.sidebarIconTop {
+  top: 14px;
+  transform: translateX(-50%);
+}
+.sidebarIconMiddle {
+  top: 50%;
+  transform: translateX(-50%) translateY(-50%);
+}
+.sidebarIconBottom {
+  bottom: 14px;
+  transform: translateX(-50%);
+}
+.sidebarIconActive .sidebarIconTop {
+  transform: rotate(45deg);
+  left: 20%;
+  top: 23px;
+}
+.sidebarIconActive .sidebarIconMiddle {
+  opacity: 0;
+  left: 100%;
+}
+.sidebarIconActive .sidebarIconBottom {
+  transform: rotate(-45deg);
+  left: 20%;
+  bottom: 23px;
+}
+
+
+
+
+

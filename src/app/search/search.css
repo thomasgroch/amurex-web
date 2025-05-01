@@ -18,6 +18,12 @@
 .sidebarActive {
   transform: translateX(0%);
 }
+.sidebarLoader {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
 .sidebarTitle {
   font-size: 24px;
   font-weight: 500;

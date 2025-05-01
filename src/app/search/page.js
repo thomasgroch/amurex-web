@@ -15,11 +15,14 @@ import StarButton from "@/components/star-button";
 import { useRouter } from "next/navigation";
 import MobileWarningBanner from "@/components/MobileWarningBanner";
 import "./search.css"
+import { ring } from 'ldrs'
 
 const BASE_URL_BACKEND = "https://api.amurex.ai";
 
 // 3. Home component
 export default function AISearch() {
+  ring.register()
+
   // 4. Initialize states and refs
   const messagesEndRef = useRef(null);
   const [inputValue, setInputValue] = useState("");
@@ -35,6 +38,8 @@ export default function AISearch() {
   const [sourcesTime, setSourcesTime] = useState(null);
   const [completionTime, setCompletionTime] = useState(null);
   const [isSidebarOpened, setIsSidebarOpened] = useState(false);
+  const [sidebarSessions, setSidebarSessions] = useState([]);
+  const [isWaitingSessions, setIsWaitingSessions] = useState(true);
 
   // Add source filter states - these are only for frontend filtering
   const [showGoogleDocs, setShowGoogleDocs] = useState(true);
@@ -145,6 +150,33 @@ export default function AISearch() {
       .then(({ data: message_history, error }) =>
         error ? console.log("error", error) : setMessageHistory(message_history)
       );
+
+    // fetching user's sessions
+    const fetchUserThreads = async () => {
+      if (!session?.user?.id) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('threads')
+          .select('*')
+          .eq('user_id', session.user.id)
+          .order('created_at', { ascending: false });
+
+        if (error) {
+          console.error('Error fetching threads:', error);
+          return;
+        }
+
+        console.log(data)
+
+        setSidebarSessions(data);
+        setIsWaitingSessions(false);
+      } catch (err) {
+        setIsWaitingSessions(false);
+        console.error('Unexpected error:', err);
+      }
+    };
+    fetchUserThreads();
 
     // Cleanup function
     return () => {
@@ -282,8 +314,10 @@ export default function AISearch() {
 
     if (!message.trim()) return
 
+    let threadId = ""
+
     try {
-      // Step 1: Create a new thread
+      // creating a new thread
       const { data: threadData, error: threadError } = await supabase
         .from('threads')
         .insert([{
@@ -298,9 +332,9 @@ export default function AISearch() {
         return;
       }
 
-      const threadId = threadData.id;
+      threadId = threadData.id;
 
-      // Step 2: Add user's message
+      // adding user's message
       const { error: messageError } = await supabase
         .from('messages')
         .insert([{
@@ -319,6 +353,7 @@ export default function AISearch() {
       console.error('Unexpected error:', err);
     }
 
+    setSidebarSessions(prev => [message, ...prev])
 
     setInputValue("");
     setIsSearching(true);
@@ -356,15 +391,38 @@ export default function AISearch() {
         let sourcesReceived = false;
         let firstChunkReceived = false;
 
+
+        let finalAnswer = "";
+        let finalSources = [];
+
+
         function readStream() {
           reader
             .read()
-            .then(({ done, value }) => {
+            .then(async ({ done, value }) => {
               if (done) {
                 // Record final completion time when stream ends
                 const endTime = performance.now();
                 setCompletionTime(((endTime - startTime) / 1000).toFixed(1));
                 setIsSearching(false);
+                console.log("done")
+
+                console.log(searchResults)
+
+                try {
+                  const { error: messageError } = await supabase
+                    .from('messages')
+                    .insert([{
+                      thread_id: threadId,
+                      role: 'assistant',
+                      content: finalAnswer,
+                      sources: JSON.stringify(finalSources)
+                    }]);
+                } catch (e) {
+                  console.error("Failed to upload assistant response:", e)
+                }
+
+
                 return;
               }
 
@@ -404,6 +462,14 @@ export default function AISearch() {
                         }
                       }
 
+                      if (data.chunk) {
+                        finalAnswer += data.chunk;
+                      }
+
+                      if (data.sources && data.sources.length > 0) {
+                        finalSources = data.sources;
+                      }
+
                       setSearchResults((prev) => ({
                         ...prev,
                         sources: data.sources || prev.sources,
@@ -415,6 +481,7 @@ export default function AISearch() {
                     console.error("Error parsing JSON:", e, "Line:", lines[i]);
                   }
                 }
+
 
                 // Keep only the incomplete line in the buffer
                 const lastNewlineIndex = buffer.lastIndexOf("\n");
@@ -439,6 +506,7 @@ export default function AISearch() {
         console.error("Error:", err);
         setIsSearching(false);
       });
+
   };
 
   // Add function to initiate Google auth
@@ -598,27 +666,37 @@ export default function AISearch() {
             </div>
             <h3 className="sidebarTitle">Your sessions:</h3>
             <div className="sidebarItems">
-              <div className="sidebarItem">
-                Summarize last 10 emails
-              </div>
-              <div className="sidebarItem">
-                When is my next meeting with Mr. Sin
-              </div>
-              <div className="sidebarItem">
-                What deadlines do I have this week?
-              </div>
-              <div className="sidebarItem">
-                Show me onboarding docs for Amurex
-              </div>
-              <div className="sidebarItem">
-                Find research/articles I saved about Cyberwarfares
-              </div>
+              {isWaitingSessions && (
+                <div className="sidebarLoader">
+                  <l-ring
+                    size="55"
+                    stroke="5"
+                    bg-opacity="0"
+                    speed="2"
+                    color="white"
+                  ></l-ring>
+                </div>
+              )}
+
+              {!!sidebarSessions.length
+                ?
+                sidebarSessions?.map(session => (
+                  <div className="sidebarItem" key={session.id}>
+                    {session.title}
+                  </div>
+                ))
+                : (
+                  <p className="absolute inset-0 flex items-center justify-center text-sm text-gray-300 tracking-wide">
+                    No sessions so far...
+                  </p>
+                )
+              }
             </div>
           </div>
 
 
           <div className="chat">
-            <h2 className="text-2xl font-medium text-white mb-4">Knowledge Search asdf</h2>
+            <h2 className="text-2xl font-medium text-white mb-4">Knowledge Search</h2>
             <div className="bg-zinc-900/70 rounded-lg border border-zinc-800 relative">
               <div className="p-4 md:p-6 border-b border-zinc-800">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">

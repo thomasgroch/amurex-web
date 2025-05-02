@@ -16,6 +16,8 @@ import {
 import { supabase } from "@/lib/supabaseClient";
 
 export function Navbar() {
+
+  console.log("navbar!")
   const router = useRouter();
   const pathname = usePathname();
   const [session, setSession] = useState(null);

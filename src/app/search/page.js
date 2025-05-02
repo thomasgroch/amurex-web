@@ -440,10 +440,14 @@ export default function AISearch() {
         result.push({ role: 'user', content: item.query });
       }
       if (item.reply) {
-        result.push({ role: 'assistant', content: item.reply });
+        result.push({ role: 'assistant', content: `${item.reply}
+          
+sources: ${JSON.stringify(item.sources)}` });
       }
       return result;
     });
+
+    console.log(transformedMessages)
 
     fetch("/api/search", {
       method: "POST",

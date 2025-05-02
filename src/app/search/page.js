@@ -28,18 +28,59 @@ export default function AISearch() {
   const [inputValue, setInputValue] = useState("");
   const [messageHistory, setMessageHistory] = useState([]);
   const [session, setSession] = useState(null);
-  const [searchResults, setSearchResults] = useState(null);
+  const [searchResults, setSearchResults] = useState({
+    /* query: "asdfasdfasdf query",
+    sources: [
+      {
+        "source": "email",
+        "id": 102349,
+        "title": "Вы пропустили сообщения на сервере 11 \"Б\"",
+        "content": "У вас 3 новых сообщений 11 &quot;Б&quot; Показать сообщения Нужна помощь? Свяжитесь с командой поддержки или напишите нам в X @discord. Хотите оставить отзыв? Дайте нам знать, что вы думаете на сайте",
+        "url": "https://mail.google.com/mail/u/0/#inbox/196787ba0976d5ad",
+        "similarity": 0.6216198342952016,
+        "text_rank": null,
+        "hybrid_score": null,
+        "type": "gmail"
+      },
+      {
+        "source": "email",
+        "id": 102345,
+        "title": "srhoe упомянул вас в OwlSec",
+        "content": "У вас 5+ новых сообщений 📢・announcement Показать сообщения 11 &quot;Б&quot; Показать сообщения Нужна помощь? Свяжитесь с командой поддержки или напишите нам в X @discord. Хотите оставить отзыв? Дайте",
+        "url": "https://mail.google.com/mail/u/0/#inbox/1967da9efd1abc0e",
+        "similarity": 0.612551144375464,
+        "text_rank": null,
+        "hybrid_score": null,
+        "type": "gmail"
+      },
+      {
+        "source": "email",
+        "id": 102342,
+        "title": "srhoe упомянул вас в OwlSec",
+        "content": "У вас 1 новое сообщение #💬・chat (OwlSec) Показать сообщения Нужна помощь? Свяжитесь с командой поддержки или напишите нам в X @discord. Хотите оставить отзыв? Дайте нам знать, что вы думаете на сайте",
+        "url": "https://mail.google.com/mail/u/0/#inbox/19682fadd97163bc",
+        "similarity": 0.612551144375464,
+        "text_rank": null,
+        "hybrid_score": null,
+        "type": "gmail"
+      }
+    ],
+    vectorResults: [],
+    answer: "Ваще хз как помочь тебе", */
+  });
   const [isSearching, setIsSearching] = useState(false);
-  const [isSearchInitiated, setIsSearchInitiated] = useState(false);
+  const [isSearchInitiated, setIsSearchInitiated] = useState(false); // gotta be false
   const [suggestedPrompts, setSuggestedPrompts] = useState([]);
   const [showOnboarding, setShowOnboarding] = useState(false);
   const [hasSeenOnboarding, setHasSeenOnboarding] = useState(false);
   const [searchStartTime, setSearchStartTime] = useState(null);
   const [sourcesTime, setSourcesTime] = useState(null);
   const [completionTime, setCompletionTime] = useState(null);
-  const [isSidebarOpened, setIsSidebarOpened] = useState(false);
+  const [isSidebarOpened, setIsSidebarOpened] = useState(true);
   const [sidebarSessions, setSidebarSessions] = useState([]);
   const [isWaitingSessions, setIsWaitingSessions] = useState(true);
+  const [currentThread, setCurrentThread] = useState([]);  // Initialize as empty array
+  const [currentThreadId, setCurrentThreadId] = useState("")
 
   // Add source filter states - these are only for frontend filtering
   const [showGoogleDocs, setShowGoogleDocs] = useState(true);
@@ -312,29 +353,50 @@ export default function AISearch() {
 
     const message = messageToSend || inputValue;
 
+    setCurrentThread(prev => [
+      ...prev,
+      {
+        query: message,
+        sources: [],
+        vectorResults: [],
+        answer: "",
+      }
+    ])
+
     if (!message.trim()) return
 
     let threadId = ""
 
     try {
-      // creating a new thread
-      const { data: threadData, error: threadError } = await supabase
-        .from('threads')
-        .insert([{
-          user_id: session.user.id,
-          title: message.slice(0, 50) // use first 50 chars as title
-        }])
-        .select()
-        .single();
+      console.log(sidebarSessions.some(session => {
+        console.log(session)
+        console.log(session.id)
+        console.log(currentThreadId)
+      }))
+      if (!sidebarSessions.some(session => session.id === currentThreadId)) {
+        console.log("creating new thread")
+        // creating a new thread
+        const { data: threadData, error: threadError } = await supabase
+          .from('threads')
+          .insert([{
+            user_id: session.user.id,
+            title: message.slice(0, 50) // use first 50 chars as title
+          }])
+          .select()
+          .single();
 
-      if (threadError) {
-        console.error('Error creating thread:', threadError);
-        return;
+        if (threadError) {
+          console.error('Error creating thread:', threadError);
+          return;
+        }
+
+        threadId = threadData.id;
+        setCurrentThreadId(threadData.id)  // Fix: Set the ID to currentThreadId instead of currentThread
+      } else {
+        threadId = currentThreadId;
       }
 
-      threadId = threadData.id;
-
-      // adding user's message
+      /* // adding user's message
       const { error: messageError } = await supabase
         .from('messages')
         .insert([{
@@ -343,17 +405,17 @@ export default function AISearch() {
           content: message
         }]);
 
+
       if (messageError) {
         console.error('Error adding message:', messageError);
         return;
-      }
+      } */
 
       console.log('✅ Message sent & thread created!');
     } catch (err) {
       console.error('Unexpected error:', err);
     }
 
-    setSidebarSessions(prev => [message, ...prev])
 
     setInputValue("");
     setIsSearching(true);
@@ -403,21 +465,55 @@ export default function AISearch() {
               if (done) {
                 // Record final completion time when stream ends
                 const endTime = performance.now();
+                let completionTimeLocal = ((endTime - startTime) / 1000).toFixed(1) // added "local" just to avoid collision with another var (gotta delete another var in the future)
                 setCompletionTime(((endTime - startTime) / 1000).toFixed(1));
+
                 setIsSearching(false);
                 console.log("done")
 
-                console.log(searchResults)
+                // writing results as the last element of currentThread
+                setCurrentThread(prev => prev.map((item, index) => {
+                  console.log(item)
+                  if (index == currentThread.length) {
+                    return {
+                      ...item,
+                      sources: finalSources,
+                      reply: finalAnswer,
+                      completionTime: completionTimeLocal
+                    }
+                  }
+
+                  return item
+                })
+                )
+
+                
+                if (!sidebarSessions.some(session => session.id === currentThreadId)) {
+                  setSidebarSessions(prev => [{ title: message, id: threadId }, ...prev])
+                }
 
                 try {
+                  console.log(message)
+                  console.log({
+                    thread_id: threadId,
+                    query: message,
+                    reply: finalAnswer,
+                    sources: JSON.stringify(finalSources),
+                    completion_time: parseFloat(completionTimeLocal)
+                  })
                   const { error: messageError } = await supabase
                     .from('messages')
                     .insert([{
                       thread_id: threadId,
-                      role: 'assistant',
-                      content: finalAnswer,
-                      sources: JSON.stringify(finalSources)
+                      query: message,
+                      reply: finalAnswer,
+                      sources: JSON.stringify(finalSources),
+                      completion_time: parseFloat(completionTimeLocal)
                     }]);
+                  if (messageError) {
+                    console.error('Error adding message:', messageError);
+                    return;
+                  }
                 } catch (e) {
                   console.error("Failed to upload assistant response:", e)
                 }
@@ -476,6 +572,7 @@ export default function AISearch() {
                         answer: prev.answer + (data.chunk || ""),
                         done: data.done || false,
                       }));
+                      console.log(data.sources || prev.sources)
                     }
                   } catch (e) {
                     console.error("Error parsing JSON:", e, "Line:", lines[i]);
@@ -508,6 +605,38 @@ export default function AISearch() {
       });
 
   };
+
+  const openThread = async (threadId) => {
+    console.log("opening thread" + threadId)
+    if (!threadId) return;
+    try {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('thread_id', threadId)
+        .order('created_at', { ascending: true });
+
+      if (error) {
+        console.error('Error fetching threads:', error);
+        return;
+      }
+
+      const transformedData = data.map(({ completion_time, sources, ...rest }) => ({
+        ...rest,
+        completionTime: completion_time,
+        sources: JSON.parse(sources)
+      }));
+      console.log(transformedData)
+
+      setCurrentThreadId(threadId)
+      setCurrentThread(transformedData)
+      setIsSearchInitiated(true)
+
+    } catch (err) {
+      setIsWaitingSessions(false);
+      console.error('Unexpected error:', err);
+    }
+  }
 
   // Add function to initiate Google auth
   const initiateGoogleAuth = async () => {
@@ -606,7 +735,7 @@ export default function AISearch() {
     <>
       <MobileWarningBanner />
       <div
-        className={`min-h-screen bg-black ${isSearchInitiated ? "pt-6" : "flex items-center justify-center"
+        className={`min-h-screen bg-black ${isSearchInitiated ? "" : ""
           }`}
       // className={"min-h-screen bg-black pt-6 flex items-center justify-center"}
       >
@@ -619,7 +748,7 @@ export default function AISearch() {
             setHasSeenOnboarding={setHasSeenOnboarding}
           />
         )}
-        <div className="p-4 md:p-6 max-w-7xl mx-auto w-full">
+        <div className="content">
           {!showOnboarding && (
             <div className="hidden bg-[#1E1E24] rounded-lg border border-zinc-800 p-4 mb-4 flex flex-col md:flex-row items-center justify-between">
               <div className="flex items-center gap-3 mb-3 md:mb-0">
@@ -678,216 +807,217 @@ export default function AISearch() {
                 </div>
               )}
 
-              {!!sidebarSessions.length
-                ?
-                sidebarSessions?.map(session => (
-                  <div className="sidebarItem" key={session.id}>
-                    {session.title}
-                  </div>
-                ))
-                : (
-                  <p className="absolute inset-0 flex items-center justify-center text-sm text-gray-300 tracking-wide">
-                    No sessions so far...
-                  </p>
-                )
-              }
+              {sidebarSessions?.map((session, index) => (
+                <div className="sidebarItem" key={session.id + index} onClick={() => openThread(session.id)}>
+                  {session.title}
+                </div>
+              ))}
+
+              {!isWaitingSessions && !sidebarSessions?.length && (
+                <p className="absolute inset-0 flex items-center justify-center text-sm text-gray-300 tracking-wide">
+                  No sessions so far...
+                </p>
+              )}
             </div>
           </div>
 
 
-          <div className="chat">
-            <h2 className="text-2xl font-medium text-white mb-4">Knowledge Search</h2>
-            <div className="bg-zinc-900/70 rounded-lg border border-zinc-800 relative">
-              <div className="p-4 md:p-6 border-b border-zinc-800">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="text-[#9334E9]">
-                      <ChatCenteredDots className="h-5 w-5" />
+          <div className={`chat ${isSidebarOpened ? '' : "chatSidebarClosed"}`}>
+            <div className="chatContent">
+              <h2 className="text-2xl font-medium text-white mb-4">Knowledge Search</h2>
+              <div className="bg-zinc-900/70 rounded-lg border border-zinc-800 relative">
+                <div className="p-4 md:p-6 border-b border-zinc-800">
+                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="text-[#9334E9]">
+                        <ChatCenteredDots className="h-5 w-5" />
+                      </div>
+                      <h1 className="text-xl md:text-2xl font-medium text-white">
+                        Hi! I&apos;m Amurex - your AI assistant for work and life
+                      </h1>
                     </div>
-                    <h1 className="text-xl md:text-2xl font-medium text-white">
-                      Hi! I&apos;m Amurex - your AI assistant for work and life
-                    </h1>
-                  </div>
-                  <div className="flex flex-col gap-2 w-full md:w-auto">
-                    <div className="grid grid-cols-2 md:grid-cols-3 items-center gap-2">
-                      {/* Google Docs button */}
-                      {hasGoogleDocs ? (
-                        <button
-                          onClick={handleGoogleDocsClick}
-                          className={`px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-xs font-medium border border-white/10 ${showGoogleDocs
-                            ? "bg-[#3c1671] text-white border-[#6D28D9]"
-                            : "bg-zinc-900 text-white"
-                            } transition-all duration-200 hover:border-[#6D28D9]`}
-                        >
-                          <img
-                            src="https://upload.wikimedia.org/wikipedia/commons/0/01/Google_Docs_logo_%282014-2020%29.svg"
-                            alt="Google Docs"
-                            className="w-4 h-4"
-                          />
-                          <span>Google Docs</span>
-                        </button>
-                      ) : (
-                        <button
-                          onClick={handleGoogleDocsClick}
-                          className="px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-xs font-medium border border-white/10 bg-zinc-900 text-white hover:bg-[#3c1671] transition-all duration-200 relative group"
-                        >
-                          <img
-                            src="https://upload.wikimedia.org/wikipedia/commons/0/01/Google_Docs_logo_%282014-2020%29.svg"
-                            alt="Google Docs"
-                            className="w-4 h-4"
-                          />
-                          <span>Google Docs</span>
-                          <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-white text-black px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-                            Connect Google Docs
-                          </span>
-                        </button>
-                      )}
-
-                      {/* Notion button */}
-                      {hasNotion ? (
-                        <button
-                          onClick={handleNotionClick}
-                          className={`px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-xs font-medium border border-white/10 ${showNotion
-                            ? "bg-[#3c1671] text-white border-[#6D28D9]"
-                            : "bg-zinc-900 text-white"
-                            } transition-all duration-200 hover:border-[#6D28D9]`}
-                        >
-                          <img
-                            src="https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png"
-                            alt="Notion"
-                            className="w-4"
-                          />
-                          <span>Notion</span>
-                        </button>
-                      ) : (
-                        <button
-                          onClick={handleNotionClick}
-                          className="px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-xs font-medium border border-white/10 bg-zinc-900 text-white hover:bg-[#3c1671] transition-all duration-200 relative group"
-                        >
-                          <img
-                            src="https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png"
-                            alt="Notion"
-                            className="w-4"
-                          />
-                          <span>Notion</span>
-                          <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-white text-black px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-                            Connect Notion
-                          </span>
-                        </button>
-                      )}
-
-                      {/* Obsidian button */}
-                      {hasObsidian ? (
-                        <button
-                          onClick={handleObsidianClick}
-                          className={`px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-xs font-medium border border-white/10 ${showObsidian
-                            ? "bg-[#3c1671] text-white border-[#6D28D9]"
-                            : "bg-zinc-900 text-white"
-                            } transition-all duration-200 hover:border-[#6D28D9]`}
-                        >
-                          <img
-                            src="https://obsidian.md/images/obsidian-logo-gradient.svg"
-                            alt="Obsidian"
-                            className="w-4"
-                          />
-                          <span>Obsidian</span>
-                        </button>
-                      ) : (
-                        <button
-                          onClick={handleObsidianClick}
-                          className="px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-xs font-medium border border-white/10 bg-zinc-900 text-white hover:bg-[#3c1671] transition-all duration-200 relative group"
-                        >
-                          <img
-                            src="https://obsidian.md/images/obsidian-logo-gradient.svg"
-                            alt="Obsidian"
-                            className="w-4"
-                          />
-                          <span>Obsidian</span>
-                          <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-white text-black px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-                            Upload Obsidian Files
-                          </span>
-                        </button>
-                      )}
-
-                      {/* Meetings button */}
-                      <button
-                        onClick={handleMeetingsClick}
-                        className={`px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-xs font-medium border border-white/10 ${showMeetings && hasMeetings
-                          ? "bg-[#3c1671] text-white border-[#6D28D9]"
-                          : "bg-zinc-900 text-white"
-                          } transition-all duration-200 hover:border-[#6D28D9] ${!hasMeetings ? "opacity-50 cursor-not-allowed" : ""
-                          }`}
-                        disabled={!hasMeetings}
-                      >
-                        <ChatCenteredDots className="w-4 h-4" />
-                        <span>Meetings</span>
-                        {!hasMeetings && (
-                          <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-white text-black px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-                            No meetings found
-                          </span>
+                    <div className="flex flex-col gap-2 w-full md:w-auto">
+                      <div className="grid grid-cols-2 md:grid-cols-3 items-center gap-2">
+                        {/* Google Docs button */}
+                        {hasGoogleDocs ? (
+                          <button
+                            onClick={handleGoogleDocsClick}
+                            className={`px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-xs font-medium border border-white/10 ${showGoogleDocs
+                              ? "bg-[#3c1671] text-white border-[#6D28D9]"
+                              : "bg-zinc-900 text-white"
+                              } transition-all duration-200 hover:border-[#6D28D9]`}
+                          >
+                            <img
+                              src="https://upload.wikimedia.org/wikipedia/commons/0/01/Google_Docs_logo_%282014-2020%29.svg"
+                              alt="Google Docs"
+                              className="w-4 h-4"
+                            />
+                            <span>Google Docs</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={handleGoogleDocsClick}
+                            className="px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-xs font-medium border border-white/10 bg-zinc-900 text-white hover:bg-[#3c1671] transition-all duration-200 relative group"
+                          >
+                            <img
+                              src="https://upload.wikimedia.org/wikipedia/commons/0/01/Google_Docs_logo_%282014-2020%29.svg"
+                              alt="Google Docs"
+                              className="w-4 h-4"
+                            />
+                            <span>Google Docs</span>
+                            <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-white text-black px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
+                              Connect Google Docs
+                            </span>
+                          </button>
                         )}
-                      </button>
 
-                      {/* Gmail button */}
-                      {hasGmail ? (
+                        {/* Notion button */}
+                        {hasNotion ? (
+                          <button
+                            onClick={handleNotionClick}
+                            className={`px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-xs font-medium border border-white/10 ${showNotion
+                              ? "bg-[#3c1671] text-white border-[#6D28D9]"
+                              : "bg-zinc-900 text-white"
+                              } transition-all duration-200 hover:border-[#6D28D9]`}
+                          >
+                            <img
+                              src="https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png"
+                              alt="Notion"
+                              className="w-4"
+                            />
+                            <span>Notion</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={handleNotionClick}
+                            className="px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-xs font-medium border border-white/10 bg-zinc-900 text-white hover:bg-[#3c1671] transition-all duration-200 relative group"
+                          >
+                            <img
+                              src="https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png"
+                              alt="Notion"
+                              className="w-4"
+                            />
+                            <span>Notion</span>
+                            <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-white text-black px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
+                              Connect Notion
+                            </span>
+                          </button>
+                        )}
+
+                        {/* Obsidian button */}
+                        {hasObsidian ? (
+                          <button
+                            onClick={handleObsidianClick}
+                            className={`px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-xs font-medium border border-white/10 ${showObsidian
+                              ? "bg-[#3c1671] text-white border-[#6D28D9]"
+                              : "bg-zinc-900 text-white"
+                              } transition-all duration-200 hover:border-[#6D28D9]`}
+                          >
+                            <img
+                              src="https://obsidian.md/images/obsidian-logo-gradient.svg"
+                              alt="Obsidian"
+                              className="w-4"
+                            />
+                            <span>Obsidian</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={handleObsidianClick}
+                            className="px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-xs font-medium border border-white/10 bg-zinc-900 text-white hover:bg-[#3c1671] transition-all duration-200 relative group"
+                          >
+                            <img
+                              src="https://obsidian.md/images/obsidian-logo-gradient.svg"
+                              alt="Obsidian"
+                              className="w-4"
+                            />
+                            <span>Obsidian</span>
+                            <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-white text-black px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
+                              Upload Obsidian Files
+                            </span>
+                          </button>
+                        )}
+
+                        {/* Meetings button */}
                         <button
-                          onClick={handleGmailClick}
-                          className={`px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-xs font-medium border border-white/10 ${showGmail
+                          onClick={handleMeetingsClick}
+                          className={`px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-xs font-medium border border-white/10 ${showMeetings && hasMeetings
                             ? "bg-[#3c1671] text-white border-[#6D28D9]"
                             : "bg-zinc-900 text-white"
-                            } transition-all duration-200 hover:border-[#6D28D9]`}
+                            } transition-all duration-200 hover:border-[#6D28D9] ${!hasMeetings ? "opacity-50 cursor-not-allowed" : ""
+                            }`}
+                          disabled={!hasMeetings}
                         >
-                          <img
-                            src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Gmail_icon_%282020%29.svg/2560px-Gmail_icon_%282020%29.svg.png"
-                            alt="Gmail"
-                            className="w-4"
-                          />
-                          <span>Gmail</span>
+                          <ChatCenteredDots className="w-4 h-4" />
+                          <span>Meetings</span>
+                          {!hasMeetings && (
+                            <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-white text-black px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
+                              No meetings found
+                            </span>
+                          )}
                         </button>
-                      ) : (
-                        <button
-                          onClick={handleGmailClick}
-                          className="px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-xs font-medium border border-white/10 bg-zinc-900 text-white hover:bg-[#3c1671] transition-all duration-200 relative"
-                        >
-                          <img
-                            src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Gmail_icon_%282020%29.svg/2560px-Gmail_icon_%282020%29.svg.png"
-                            alt="Gmail"
-                            className="w-4"
-                          />
-                          <span>Gmail</span>
-                          <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-white text-black px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
-                            Connect Gmail
-                          </span>
-                        </button>
-                      )}
+
+                        {/* Gmail button */}
+                        {hasGmail ? (
+                          <button
+                            onClick={handleGmailClick}
+                            className={`px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-xs font-medium border border-white/10 ${showGmail
+                              ? "bg-[#3c1671] text-white border-[#6D28D9]"
+                              : "bg-zinc-900 text-white"
+                              } transition-all duration-200 hover:border-[#6D28D9]`}
+                          >
+                            <img
+                              src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Gmail_icon_%282020%29.svg/2560px-Gmail_icon_%282020%29.svg.png"
+                              alt="Gmail"
+                              className="w-4"
+                            />
+                            <span>Gmail</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={handleGmailClick}
+                            className="px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-xs font-medium border border-white/10 bg-zinc-900 text-white hover:bg-[#3c1671] transition-all duration-200 relative"
+                          >
+                            <img
+                              src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Gmail_icon_%282020%29.svg/2560px-Gmail_icon_%282020%29.svg.png"
+                              alt="Gmail"
+                              className="w-4"
+                            />
+                            <span>Gmail</span>
+                            <span className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-white text-black px-2 py-1 rounded text-xs opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap">
+                              Connect Gmail
+                            </span>
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="p-4 md:p-6 space-y-6">
-                <div className="w-full">
-                  <InputArea
-                    inputValue={inputValue}
-                    setInputValue={setInputValue}
-                    sendMessage={sendMessage}
-                    className="w-full"
-                  />
-                </div>
-
-                {(isSearching || searchResults?.query) && (
-                  <div className="space-y-6">
-                    <Query
-                      content={searchResults?.query || ""}
-                      sourcesTime={sourcesTime}
-                      completionTime={completionTime}
+                <div className="p-4 md:p-6 space-y-6">
+                  <div className="w-full">
+                    <InputArea
+                      inputValue={inputValue}
+                      setInputValue={setInputValue}
+                      sendMessage={sendMessage}
+                      className={`w-full ${isSearchInitiated && "hidden"}`}
                     />
+                  </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-[2fr,1fr] gap-6">
-                      <div>
-                        <div className="flex justify-between items-center mb-3">
-                          {/* <Heading content="Answer" /> */}
-                          {!isSearching && searchResults?.query && (
+                  <div>
+                    {currentThread?.map((question, index) => (
+                      <div className="space-y-6 threadItem" key={index}>
+                        <Query
+                          content={question?.query || ""}
+                          sourcesTime={sourcesTime}
+                          completionTime={question.completionTime}
+                        />
+
+                        {/* "grid grid-cols-1 lg:grid-cols-[2fr,1fr] gap-6" */}
+                        <div className="answer">
+                          <div>
+                            <div className="flex justify-between items-center mb-1">
+                              {/* <Heading content="Answer" /> */}
+                              {/* {!isSearching && searchResults?.query && (
                             <button
                               onClick={() => sendMessage(searchResults.query)}
                               className="flex items-center gap-1 text-sm text-zinc-300 hover:text-white bg-black border border-zinc-800 hover:border-[#6D28D9] px-3 py-1.5 rounded-md transition-colors"
@@ -901,122 +1031,191 @@ export default function AISearch() {
                               >
                                 <path
                                   d="M460.656,132.911c-58.7-122.1-212.2-166.5-331.8-104.1c-9.4,5.2-13.5,16.6-8.3,27c5.2,9.4,16.6,13.5,27,8.3
-                                c99.9-52,227.4-14.9,276.7,86.3c65.4,134.3-19,236.7-87.4,274.6c-93.1,51.7-211.2,17.4-267.6-70.7l69.3,14.5
-                                c10.4,2.1,21.8-4.2,23.9-15.6c2.1-10.4-4.2-21.8-15.6-23.9l-122.8-25c-20.6-2-25,16.6-23.9,22.9l15.6,123.8
-                                c1,10.4,9.4,17.7,19.8,17.7c12.8,0,20.8-12.5,19.8-23.9l-6-50.5c57.4,70.8,170.3,131.2,307.4,68.2
-                                C414.856,432.511,548.256,314.811,460.656,132.911z"
+                              c99.9-52,227.4-14.9,276.7,86.3c65.4,134.3-19,236.7-87.4,274.6c-93.1,51.7-211.2,17.4-267.6-70.7l69.3,14.5
+                              c10.4,2.1,21.8-4.2,23.9-15.6c2.1-10.4-4.2-21.8-15.6-23.9l-122.8-25c-20.6-2-25,16.6-23.9,22.9l15.6,123.8
+                              c1,10.4,9.4,17.7,19.8,17.7c12.8,0,20.8-12.5,19.8-23.9l-6-50.5c57.4,70.8,170.3,131.2,307.4,68.2
+                              C414.856,432.511,548.256,314.811,460.656,132.911z"
                                 />
                               </svg>
                               Regenerate
                             </button>
-                          )}
-                        </div>
-                        <div className="bg-black rounded-lg p-4 border border-zinc-800 text-zinc-300">
-                          <GPT content={searchResults?.answer || ""} />
-                          {isSearching && (
-                            <span className="inline-block animate-pulse">▋</span>
+                          )} */}
+                            </div>
+                            <div className="bg-black rounded-lg p-4 border border-zinc-800 text-zinc-300">
+                              <GPT content={question?.reply || ""} />
+                              {!question?.reply?.length && (
+                                <span className="inline-block animate-pulse">▋</span>
+                              )}
+                            </div>
+                          </div>
+
+                          {question?.sources?.length > 0 && (
+                            <div>
+                              <Sources content={question.sources} filters={{ showGoogleDocs, showNotion, showMeetings, showObsidian, showGmail }} />
+                            </div>
                           )}
                         </div>
                       </div>
-
-                      {searchResults?.sources?.length > 0 && (
-                        <div>
-                          <Sources content={searchResults.sources} filters={{ showGoogleDocs, showNotion, showMeetings, showObsidian, showGmail }} />
-                        </div>
-                      )}
-                    </div>
+                    ))}
                   </div>
-                )}
-              </div>
-            </div>
 
-            {/* Suggested prompts moved outside the main box */}
-            {!isSearchInitiated && (
-              <div className="mt-6 space-y-2">
-                <div className="text-zinc-500 text-md">Personalized prompt suggestions</div>
-                <div className="flex flex-col gap-3">
-                  {suggestedPrompts.length === 0 ? (
-                    <>
-                      {[1, 2, 3].map((_, index) => (
-                        <div
-                          key={index}
-                          className="transition-all duration-500 w-[70%] px-4 py-4 pr-16 rounded-lg bg-zinc-900/70 border border-zinc-800 text-zinc-300 hover:bg-[#3c1671] hover:border-[#6D28D9] transition-colors text-lg text-left relative group animated pulse"
-                        >
-                          <div className="h-4 bg-zinc-800 rounded w-3/4 m-4"></div>
+
+
+                  {(isSearching || searchResults?.query) && false && (
+                    <div className="space-y-6">
+                      <Query
+                        content={searchResults?.query || ""}
+                        sourcesTime={sourcesTime}
+                        completionTime={completionTime}
+                      />
+
+                      {/* "grid grid-cols-1 lg:grid-cols-[2fr,1fr] gap-6" */}
+                      <div className="answer">
+                        <div>
+                          <div className="flex justify-between items-center mb-3">
+                            {/* <Heading content="Answer" /> */}
+                            {/* {!isSearching && searchResults?.query && (
+                              <button
+                                onClick={() => sendMessage(searchResults.query)}
+                                className="flex items-center gap-1 text-sm text-zinc-300 hover:text-white bg-black border border-zinc-800 hover:border-[#6D28D9] px-3 py-1.5 rounded-md transition-colors"
+                              >
+                                <svg
+                                  width="16"
+                                  height="16"
+                                  viewBox="0 0 489.645 489.645"
+                                  fill="currentColor"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    d="M460.656,132.911c-58.7-122.1-212.2-166.5-331.8-104.1c-9.4,5.2-13.5,16.6-8.3,27c5.2,9.4,16.6,13.5,27,8.3
+                                c99.9-52,227.4-14.9,276.7,86.3c65.4,134.3-19,236.7-87.4,274.6c-93.1,51.7-211.2,17.4-267.6-70.7l69.3,14.5
+                                c10.4,2.1,21.8-4.2,23.9-15.6c2.1-10.4-4.2-21.8-15.6-23.9l-122.8-25c-20.6-2-25,16.6-23.9,22.9l15.6,123.8
+                                c1,10.4,9.4,17.7,19.8,17.7c12.8,0,20.8-12.5,19.8-23.9l-6-50.5c57.4,70.8,170.3,131.2,307.4,68.2
+                                C414.856,432.511,548.256,314.811,460.656,132.911z"
+                                  />
+                                </svg>
+                                Regenerate
+                              </button>
+                            )} */}
+                          </div>
+                          <div className="bg-black rounded-lg p-4 border border-zinc-800 text-zinc-300">
+                            <GPT content={searchResults?.reply || ""} />
+                            {isSearching && (
+                              <span className="inline-block animate-pulse">▋</span>
+                            )}
+                          </div>
                         </div>
-                      ))}
-                    </>
-                  ) : (
-                    <>
-                      {/* Regular prompts */}
-                      {suggestedPrompts
-                        .filter((item) => item.type === "prompt")
-                        .map((item, index) => (
-                          <button
-                            key={index}
-                            onClick={() => {
-                              setInputValue(item.text);
-                              sendMessage(item.text);
-                            }}
-                            className="transition-all duration-500 w-[70%] px-4 py-4 pr-16 rounded-lg bg-zinc-900/70 border border-zinc-800 text-zinc-300 hover:bg-[#3c1671] hover:border-[#6D28D9] transition-colors text-lg text-left relative group"
-                          >
-                            {item.text}
-                            <div className="absolute right-4 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="24"
-                                height="20"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="text-white"
-                              >
-                                <path d="M3 12h18"></path>
-                                <path d="m16 5 7 7-7 7"></path>
-                              </svg>
-                            </div>
-                          </button>
-                        ))}
-                      {/* Email actions */}
-                      {suggestedPrompts
-                        .filter((item) => item.type === "email")
-                        .map((item, index) => (
-                          <button
-                            key={index}
-                            onClick={() => {
-                              setInputValue(item.text);
-                              sendMessage(item.text);
-                            }}
-                            className="transition-all duration-500 w-[70%] px-4 py-4 pr-16 rounded-lg bg-zinc-900/70 border border-zinc-800 text-zinc-300 hover:bg-[#3c1671] hover:border-[#6D28D9] transition-colors text-lg text-left relative group"
-                          >
-                            <span>{item.text}</span>
-                            <div className="absolute right-4 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="24"
-                                height="20"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                className="text-white"
-                              >
-                                <path d="M3 12h18"></path>
-                                <path d="m16 5 7 7-7 7"></path>
-                              </svg>
-                            </div>
-                          </button>
-                        ))}
-                    </>
+
+                        {searchResults?.sources?.length > 0 && (
+                          <div>
+                            <Sources content={searchResults.sources} filters={{ showGoogleDocs, showNotion, showMeetings, showObsidian, showGmail }} />
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   )}
+
+
                 </div>
               </div>
-            )}
+
+              {/* Suggested prompts moved outside the main box */}
+              {!isSearchInitiated && (
+                <div className="mt-6 space-y-2">
+                  <div className="text-zinc-500 text-md">Personalized prompt suggestions</div>
+                  <div className="flex flex-col gap-3">
+                    {suggestedPrompts.length === 0 ? (
+                      <>
+                        {[1, 2, 3].map((_, index) => (
+                          <div
+                            key={index}
+                            className="transition-all duration-500 w-[70%] px-4 py-4 pr-16 rounded-lg bg-zinc-900/70 border border-zinc-800 text-zinc-300 hover:bg-[#3c1671] hover:border-[#6D28D9] transition-colors text-lg text-left relative group animated pulse"
+                          >
+                            <div className="h-4 bg-zinc-800 rounded w-3/4 m-4"></div>
+                          </div>
+                        ))}
+                      </>
+                    ) : (
+                      <>
+                        {/* Regular prompts */}
+                        {suggestedPrompts
+                          .filter((item) => item.type === "prompt")
+                          .map((item, index) => (
+                            <button
+                              key={index}
+                              onClick={() => {
+                                setInputValue(item.text);
+                                sendMessage(item.text);
+                              }}
+                              className="transition-all duration-500 w-[70%] px-4 py-4 pr-16 rounded-lg bg-zinc-900/70 border border-zinc-800 text-zinc-300 hover:bg-[#3c1671] hover:border-[#6D28D9] transition-colors text-lg text-left relative group"
+                            >
+                              {item.text}
+                              <div className="absolute right-4 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="24"
+                                  height="20"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  className="text-white"
+                                >
+                                  <path d="M3 12h18"></path>
+                                  <path d="m16 5 7 7-7 7"></path>
+                                </svg>
+                              </div>
+                            </button>
+                          ))}
+                        {/* Email actions */}
+                        {suggestedPrompts
+                          .filter((item) => item.type === "email")
+                          .map((item, index) => (
+                            <button
+                              key={index}
+                              onClick={() => {
+                                setInputValue(item.text);
+                                sendMessage(item.text);
+                              }}
+                              className="transition-all duration-500 w-[70%] px-4 py-4 pr-16 rounded-lg bg-zinc-900/70 border border-zinc-800 text-zinc-300 hover:bg-[#3c1671] hover:border-[#6D28D9] transition-colors text-lg text-left relative group"
+                            >
+                              <span>{item.text}</span>
+                              <div className="absolute right-4 top-1/2 transform -translate-y-1/2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  width="24"
+                                  height="20"
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  strokeWidth="2"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  className="text-white"
+                                >
+                                  <path d="M3 12h18"></path>
+                                  <path d="m16 5 7 7-7 7"></path>
+                                </svg>
+                              </div>
+                            </button>
+                          ))}
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="followUpInputArea">
+              <InputArea
+                inputValue={inputValue}
+                setInputValue={setInputValue}
+                sendMessage={sendMessage}
+                className={`w-full ${!isSearchInitiated && "hidden"}`}
+              />
+            </div>
           </div>
 
         </div>
@@ -1170,9 +1369,9 @@ export const Query = ({ content = "", sourcesTime, completionTime }) => {
         {content}
       </div>
       <div className="text-sm text-zinc-500 mt-1 md:mt-0 flex flex-col md:items-end">
-        {sourcesTime && (
+        {completionTime && (
           <div className="px-2 py-1 rounded-md bg-[#9334E9] text-white w-fit">
-            Searched in {sourcesTime} seconds
+            Searched in {completionTime} seconds
           </div>
         )}
       </div>
@@ -1290,7 +1489,7 @@ export const Sources = ({ content = [], filters = {} }) => {
     }
   };
 
-  if (!content || content.length === 0) {
+  if (!content || content?.length === 0) {
     return (
       <div>
         <div className="text-[#9334E9] font-medium mb-3 text-md md:text-xl flex items-center gap-2">
@@ -1313,7 +1512,7 @@ export const Sources = ({ content = [], filters = {} }) => {
   }
 
   // Show message when all sources are filtered out
-  if (filteredSources.length === 0 && content.length > 0) {
+  /* if (filteredSources.length === 0 && content.length > 0) {
     return (
       <div>
         <div className="text-[#9334E9] font-medium mb-3 text-md md:text-xl flex items-center gap-2">
@@ -1325,32 +1524,33 @@ export const Sources = ({ content = [], filters = {} }) => {
         </div>
       </div>
     );
-  }
+  } */
 
   return (
-    <div>
+    <div>{/*  */}
       <div className="text-[#9334E9] font-medium mb-3 text-md md:text-xl flex items-center gap-2">
         {/* <GitBranch size={20} className="md:w-6 md:h-6" /> */}
         {/* <span>Sources</span> */}
       </div>
-      <div className="grid grid-cols-1 gap-2 pt-8">
+      <div className="sourceItems">
         {Array.isArray(filteredSources) &&
           filteredSources.map((source, index) => {
             return (
               <a
                 key={index}
                 href={source.url || "#"}
-                className="block"
+                className="block sourceItem"
                 target="_blank"
                 rel="noopener noreferrer"
-              >
-                <div className="bg-black rounded-lg p-4 border border-zinc-800 hover:border-[#6D28D9] transition-colors h-[160px] relative">
+              >{/* bg-black rounded-lg p-4 border border-zinc-800 hover:border-[#6D28D9] transition-colors h-[160px] relative */}
+                <div className="">
                   <Link className="absolute top-4 right-4 w-4 h-4 text-zinc-500" />
                   <div className="text-zinc-300 text-sm font-medium mb-2 flex items-center gap-2">
                     {getSourceIcon(source.type)}
                     <div className="flex flex-col overflow-hidden">
                       <span className="truncate font-medium max-w-full">
-                        {source.title || "Document"}
+                        {source.type || "Service"}
+
                       </span>
 
                       {/* Show sender if available (for email types) */}
@@ -1361,8 +1561,8 @@ export const Sources = ({ content = [], filters = {} }) => {
                       )}
                     </div>
                   </div>
-                  <div className="text-zinc-500 text-xs overflow-hidden line-clamp-4">
-                    <ReactMarkdown>{source.content || ""}</ReactMarkdown>
+                  <div className="text-zinc-500 text-sm overflow-hidden line-clamp-4">
+                    <ReactMarkdown>{/* {source.content || ""} */}{source.title || "Document"}</ReactMarkdown>
                   </div>
                 </div>
               </a>

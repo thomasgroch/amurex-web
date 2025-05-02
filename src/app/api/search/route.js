@@ -141,7 +141,7 @@ export async function POST(req) {
     console.log("Starting search at:", new Date().toISOString());
     
     // Call search_new endpoint directly
-    const response = await fetch('https://brain.amurex.ai/search_new', {
+    const response = await fetch('https://brain.amurex.ai/search_unified', {
     // const response = await fetch('http://localhost:8080/search_new', {
       method: 'POST',
       headers: {
@@ -150,7 +150,7 @@ export async function POST(req) {
       },
       body: JSON.stringify({
         user_id: user_id,
-        query: message,
+        query: message, // messages, without sources, without system prompt
         ai_enabled: false,
         limit: 3
       })

@@ -1,17 +1,18 @@
+.content {
+  display: flex;
+  justify-content: space-between;
+}
 .sidebar {
-  position: fixed;
-  left: 0;
+  position: absolute;
   top: 0;
   height: 100vh;
-  /* background: #000; */
-  backdrop-filter: blur(9px);
+  background: #000;
+  /* backdrop-filter: blur(9px); */
   border-right: 1px solid #27272A;
-  z-index: 300;
+  z-index: 48;
   padding: 18px 10px;
   color: #fff;
-  min-width: 300px;
-  max-width: 500px;
-  width: 25%;
+  width: 300px;
   transition: all 0.7s ease;
   transform: translateX(-100%);
 }
@@ -32,6 +33,7 @@
 
 .sidebarItems {
   margin-top: 20px;
+  overflow-y: auto;
 }
 .sidebarItem {
   padding: 16px;
@@ -99,7 +101,62 @@
   bottom: 23px;
 }
 
+.chat {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  margin-left: 300px;
+  transition: all 0.7s ease;
+  position: relative;
+}
+.chatContent {
+  flex: 1 1 auto;
+  padding: 100px 30px 20px;
+  box-sizing: border-box;
+  overflow-y: auto;
+}
+.chatSidebarClosed {
+  margin-left: 0;
+}
+
+
+.followUpInputArea {
+  padding: 15px 40px;
+  width: calc(100% - 40px);
+  transition: all 0.7s ease;
+  position: relative;
+  right: 11px;
+}
 
 
 
+.answer {
+  
+}
+.sourceItems {
+  display: flex;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+}
+.sourceItem {
+  background-color: black;
+  border-radius: 0.5rem; /* rounded-lg */
+  padding: 1rem;         /* p-4 */
+  border: 1px solid #27272a; /* border-zinc-800 */
+  position: relative;
+  transition: border-color 0.2s ease; /* transition-colors */
+  width: 30%;
+  margin-right: 10px;
+}
 
+.sourceItem:hover {
+  border-color: #6D28D9;
+}
+
+.threadItem {
+  margin-bottom: 60px;
+}
+.threadItem:last-child {
+  margin-bottom: 0;
+}

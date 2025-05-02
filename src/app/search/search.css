@@ -6,6 +6,8 @@
   position: absolute;
   top: 0;
   height: 100vh;
+  display: flex;
+  flex-direction: column;
   background: #000;
   /* backdrop-filter: blur(9px); */
   border-right: 1px solid #27272A;
@@ -34,7 +36,9 @@
 
 .sidebarItems {
   margin-top: 20px;
+  flex: 1 1 auto;
   overflow-y: auto;
+  padding: 0 8px;
 }
 .sidebarItem:first-child {
   font-weight: 500;
@@ -52,11 +56,27 @@
   cursor: pointer;
   margin-bottom: 12px;
   transition: all 0.25s ease;
+  position: relative;
 }
 .sidebarItem:hover {
   /* background: rgba(255, 255, 255, 0.16); */
   background: rgba(255, 255, 255, 0.13);
   border: 1px solid #414144;
+}
+.deleteIcon {
+  position: absolute;
+  right: 5px;
+  top: 50%;
+  width: 28px;
+  transform: translateY(-50%);
+  padding: 5px;
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.2s ease;
+}
+.sidebarItem:hover .deleteIcon {
+  opacity: 1;
+  visibility: visible;
 }
 
 .sidebarIcon {
@@ -170,4 +190,74 @@
 }
 .threadItem:last-child {
   margin-bottom: 0;
+}
+
+
+.popupTitle {
+  font-size: 21px;
+  font-weight: 500;
+  color: #fff;
+  word-break: break-all;
+  padding-right: 19px;
+}
+.popupSubtitle {
+  margin-top: 4px;
+  margin-bottom: 16px;
+  font-size: 15px;
+  line-height: 136%;
+  letter-spacing: 0.3px;
+  color: #fff;
+  word-break: break-all;
+}
+.errorMessage {
+  text-align: right;
+  color: #f47474;
+  font-weight: 500;
+  font-size: 14px;
+  margin-top: 8px;
+  margin-bottom: -5px;
+}
+
+.popupConfirmationButtons {
+  display: flex;
+  justify-content: end;
+  user-select: none;
+}
+.fileMutationButton {
+  padding: 7px 22px;
+  font-size: 15.5px;
+  border-radius: 8px;
+  margin-top: 15px;
+  letter-spacing: 0.6px;
+  transition: all 0.24s ease;
+  cursor: pointer;
+  letter-spacing: 0.6px;
+  margin-right: 11px;
+  color: #fff;
+
+  border: 2px solid #E9EAEC;
+  background: #3a3a3a;
+}
+.fileMutationButton:hover {
+  background: #414141;
+  
+}
+.fileMutationButtonHighlight {
+  padding: 7px 22px;
+  font-size: 15.5px;
+  border-radius: 8px;
+  margin-top: 15px;
+  letter-spacing: 0.9px;
+  transition: all 0.24s ease;
+  cursor: pointer;
+  margin-right: 0;
+  border: none;
+  display: flex;
+  align-items: center;
+  background: #842dda;
+  color: #fff;
+  box-shadow: 0 0 5px rgba(131, 45, 218, 0.243);
+}
+.fileMutationButtonHighlight:hover {
+  box-shadow: 0 0 13px rgba(131, 45, 218, 0.6);
 }

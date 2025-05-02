@@ -16,6 +16,7 @@ import { useRouter } from "next/navigation";
 import MobileWarningBanner from "@/components/MobileWarningBanner";
 import "./search.css"
 import { ring } from 'ldrs'
+import Popup from "@/components/Popup/Popup";
 
 const BASE_URL_BACKEND = "https://api.amurex.ai";
 
@@ -81,6 +82,14 @@ export default function AISearch() {
   const [isWaitingSessions, setIsWaitingSessions] = useState(true);
   const [currentThread, setCurrentThread] = useState([]);  // Initialize as empty array
   const [currentThreadId, setCurrentThreadId] = useState("")
+  const [isDeletionConfirmationPopupOpened, setIsDeletionConfirmationPopupOpened] = useState(false);
+  const [deletionConfirmation, setDeletionConfirmation] = useState({
+    deletingThread: {
+      title: "None"
+    },
+    isWaiting: false,
+    error: ""
+  })
 
   // Add source filter states - these are only for frontend filtering
   const [showGoogleDocs, setShowGoogleDocs] = useState(true);
@@ -440,9 +449,11 @@ export default function AISearch() {
         result.push({ role: 'user', content: item.query });
       }
       if (item.reply) {
-        result.push({ role: 'assistant', content: `${item.reply}
+        result.push({
+          role: 'assistant', content: `${item.reply}
           
-sources: ${JSON.stringify(item.sources)}` });
+sources: ${JSON.stringify(item.sources)}`
+        });
       }
       return result;
     });
@@ -654,6 +665,64 @@ sources: ${JSON.stringify(item.sources)}` });
     }
   }
 
+  const deleteThread = async () => {
+    console.log(`Deleting: ${deletionConfirmation?.deletingThread}`)
+    console.log(deletionConfirmation?.deletingThread)
+    try {
+      
+      if (deletionConfirmation?.deletingThread) {
+        const threadId = deletionConfirmation?.deletingThread?.id 
+        setDeletionConfirmation(prev => ({
+          ...prev,
+          isWaiting: true,
+          error: ""
+        }))
+
+        // Delete thread from DB
+        const { error } = await supabase
+          .from("threads")
+          .delete()
+          .eq("id", threadId);
+
+        if (error) {
+          console.error("Error deleting thread:", error.message);
+          setDeletionConfirmation(prev => ({
+            ...prev,
+            isWaiting: false,
+            error: "Failed to delete thread from server"
+          }));
+          return;
+        }
+
+        // Remove from client-side list
+        setSidebarSessions(prev =>
+          prev.filter(session => session.id !== threadId)
+        );
+
+        setIsDeletionConfirmationPopupOpened(false)
+        setTimeout(() => {
+          setDeletionConfirmation({
+            deletingThread: {
+              title: "None"
+            },
+            isWaiting: false,
+            error: ""
+          })
+        }, 400);
+
+
+
+      }
+    } catch (e) {
+      console.log(e)
+      setDeletionConfirmation(prev => ({
+        ...prev,
+        isWaiting: false,
+        error: "Something went wrong, please try again later"
+      }))
+    }
+  }
+
   // Add function to initiate Google auth
   const initiateGoogleAuth = async () => {
     try {
@@ -755,6 +824,35 @@ sources: ${JSON.stringify(item.sources)}` });
           }`}
       // className={"min-h-screen bg-black pt-6 flex items-center justify-center"}
       >
+
+        <Popup isPopupOpened={isDeletionConfirmationPopupOpened} setIsPopupOpened={setIsDeletionConfirmationPopupOpened} forbidClosing={deletionConfirmation?.isWaiting}>
+          <h3 className="popupTitle">Deleting thread "{deletionConfirmation?.deletingThread?.title}"?</h3>
+          <p className="popupSubtitle">
+            Are you sure you want to delete thread with name "{deletionConfirmation?.deletingThread?.title}"
+          </p>
+
+          <p className="errorMessage">{deletionConfirmation?.error}</p>
+
+          <div className="popupConfirmationButtons">
+            <button className="fileMutationButton" onClick={() => setIsDeletionConfirmationPopupOpened(false)} disabled={deletionConfirmation?.isWaiting}>
+              Cancel
+            </button>
+            <button className="fileMutationButtonHighlight" onClick={deleteThread} disabled={deletionConfirmation?.isWaiting}>
+              {deletionConfirmation?.isWaiting ? (
+                <>
+                  <span>Deleting...</span>
+                  <l-tail-chase
+                    size="26"
+                    speed="1.75"
+                    color="white"
+                  ></l-tail-chase>
+                </>
+              ) : "Delete"}
+            </button>
+          </div>
+
+        </Popup>
+
         <div className="fixed top-4 right-4 z-50 hidden">
           <StarButton />
         </div>
@@ -765,6 +863,7 @@ sources: ${JSON.stringify(item.sources)}` });
           />
         )}
         <div className="content">
+
           {!showOnboarding && (
             <div className="hidden bg-[#1E1E24] rounded-lg border border-zinc-800 p-4 mb-4 flex flex-col md:flex-row items-center justify-between">
               <div className="flex items-center gap-3 mb-3 md:mb-0">
@@ -836,6 +935,15 @@ sources: ${JSON.stringify(item.sources)}` });
                   {sidebarSessions?.map((session, index) => (
                     <div className="sidebarItem" key={session.id + index} onClick={() => openThread(session.id)}>
                       {session.title}
+                      <img src="/delete.png" alt="" className="deleteIcon" onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        setIsDeletionConfirmationPopupOpened(true);
+                        setDeletionConfirmation(prev => ({
+                          ...prev,
+                          deletingThread: session
+                        }))
+                      }} />
                     </div>
                   ))}
                 </>

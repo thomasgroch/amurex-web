@@ -826,9 +826,9 @@ sources: ${JSON.stringify(item.sources)}`
       >
 
         <Popup isPopupOpened={isDeletionConfirmationPopupOpened} setIsPopupOpened={setIsDeletionConfirmationPopupOpened} forbidClosing={deletionConfirmation?.isWaiting}>
-          <h3 className="popupTitle">Deleting thread "{deletionConfirmation?.deletingThread?.title}"?</h3>
+          <h3 className="popupTitle">Deleting thread &quot;{deletionConfirmation?.deletingThread?.title}&quot;?</h3>
           <p className="popupSubtitle">
-            Are you sure you want to delete thread with name "{deletionConfirmation?.deletingThread?.title}"
+            Are you sure you want to delete thread with name &quot;{deletionConfirmation?.deletingThread?.title}&quot;?
           </p>
 
           <p className="errorMessage">{deletionConfirmation?.error}</p>

@@ -129,7 +129,7 @@ export async function POST(req) {
   }
   
   // Original chat functionality continues here...
-  const { message, user_id } = body;
+  const { message, context, user_id } = body;
   
   if (!user_id) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
@@ -150,7 +150,10 @@ export async function POST(req) {
       },
       body: JSON.stringify({
         user_id: user_id,
-        query: message, // messages, without sources, without system prompt
+        query: [
+          ...context,
+          {role: "user", content: message}
+        ], // messages, without sources, without system prompt
         ai_enabled: false,
         limit: 3
       })
@@ -261,6 +264,7 @@ export async function POST(req) {
 
                     Always aim to be helpful, aware, and resourceful — even if you have to fake it a bit.`,
               },
+              ...context,
               {
                 role: "user",
                 content: `Query: ${message}

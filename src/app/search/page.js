@@ -434,9 +434,21 @@ export default function AISearch() {
       answer: "",
     });
 
+    const transformedMessages = currentThread.flatMap(item => {
+      const result = [];
+      if (item.query) {
+        result.push({ role: 'user', content: item.query });
+      }
+      if (item.reply) {
+        result.push({ role: 'assistant', content: item.reply });
+      }
+      return result;
+    });
+
     fetch("/api/search", {
       method: "POST",
       body: JSON.stringify({
+        context: transformedMessages,
         message,
         user_id: session.user.id,
       }),

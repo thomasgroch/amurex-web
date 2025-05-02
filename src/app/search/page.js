@@ -809,7 +809,8 @@ sources: ${JSON.stringify(item.sources)}` });
               <span className="sidebarIconMiddle"></span>
               <span className="sidebarIconBottom"></span>
             </div>
-            <h3 className="sidebarTitle">Your sessions:</h3>
+            {/* <h3 className="sidebarTitle">Your sessions:</h3> */}
+            <h2 className="text-2xl font-medium text-white mb-6">Knowledge Search</h2>
             <div className="sidebarItems">
               {isWaitingSessions && (
                 <div className="sidebarLoader">
@@ -830,7 +831,7 @@ sources: ${JSON.stringify(item.sources)}` });
                     setCurrentThreadId("")
                   }}>
                     <img src="/plus.png" alt="New session" className="w-4 h-4 mr-2 inline-block" />
-                    Start new session
+                    New search
                   </div>
                   {sidebarSessions?.map((session, index) => (
                     <div className="sidebarItem" key={session.id + index} onClick={() => openThread(session.id)}>
@@ -852,7 +853,7 @@ sources: ${JSON.stringify(item.sources)}` });
 
           <div className={`chat ${isSidebarOpened ? '' : "chatSidebarClosed"}`}>
             <div className="chatContent">
-              <h2 className="text-2xl font-medium text-white mb-4">Knowledge Search</h2>
+              <h2 className="hidden text-2xl font-medium text-white mb-4">Knowledge Search</h2>
               <div className="bg-zinc-900/70 rounded-lg border border-zinc-800 relative">
                 <div className="p-4 md:p-6 border-b border-zinc-800">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -861,7 +862,7 @@ sources: ${JSON.stringify(item.sources)}` });
                         <ChatCenteredDots className="h-5 w-5" />
                       </div>
                       <h1 className="text-xl md:text-2xl font-medium text-white">
-                        Hi! I&apos;m Amurex - your AI assistant for work and life
+                        Search your knowledge
                       </h1>
                     </div>
                     <div className="flex flex-col gap-2 w-full md:w-auto">

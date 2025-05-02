@@ -10,7 +10,8 @@
   /* backdrop-filter: blur(9px); */
   border-right: 1px solid #27272A;
   z-index: 48;
-  padding: 18px 10px;
+  /* padding: 18px 10px; */
+  padding: 1rem;
   color: #fff;
   width: 300px;
   transition: all 0.7s ease;
@@ -43,16 +44,19 @@
   user-select: none;
 }
 .sidebarItem {
-  padding: 16px;
+  padding: 14px;
   border-radius: 9px;
-  border: 1px solid #414144;
-  background: rgba(255, 255, 255, 0.13);
+  border: 1px solid rgb(39 39 42/var(--tw-bg-opacity));
+  /* background: rgba(255, 255, 255, 0.13); */
+  background: rgb(39 39 42/var(--tw-bg-opacity));
   cursor: pointer;
   margin-bottom: 12px;
   transition: all 0.25s ease;
 }
 .sidebarItem:hover {
-  background: rgba(255, 255, 255, 0.16);
+  /* background: rgba(255, 255, 255, 0.16); */
+  background: rgba(255, 255, 255, 0.13);
+  border: 1px solid #414144;
 }
 
 .sidebarIcon {

@@ -487,7 +487,7 @@ export default function AISearch() {
                 })
                 )
 
-                
+
                 if (!sidebarSessions.some(session => session.id === currentThreadId)) {
                   setSidebarSessions(prev => [{ title: message, id: threadId }, ...prev])
                 }
@@ -806,12 +806,24 @@ export default function AISearch() {
                   ></l-ring>
                 </div>
               )}
+              {!!sidebarSessions.length && (
+                <>
+                  <div className="sidebarItem" onClick={() => {
+                    setIsSearchInitiated(false);
+                    setCurrentThread([])
+                    setCurrentThreadId("")
+                  }}>
+                    <img src="/plus.png" alt="New session" className="w-4 h-4 mr-2 inline-block" />
+                    Start new session
+                  </div>
+                  {sidebarSessions?.map((session, index) => (
+                    <div className="sidebarItem" key={session.id + index} onClick={() => openThread(session.id)}>
+                      {session.title}
+                    </div>
+                  ))}
+                </>
+              )}
 
-              {sidebarSessions?.map((session, index) => (
-                <div className="sidebarItem" key={session.id + index} onClick={() => openThread(session.id)}>
-                  {session.title}
-                </div>
-              ))}
 
               {!isWaitingSessions && !sidebarSessions?.length && (
                 <p className="absolute inset-0 flex items-center justify-center text-sm text-gray-300 tracking-wide">

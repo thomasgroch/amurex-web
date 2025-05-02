@@ -35,6 +35,13 @@
   margin-top: 20px;
   overflow-y: auto;
 }
+.sidebarItem:first-child {
+  font-weight: 500;
+  margin-bottom: 27px;
+  display: flex;
+  align-items: center;
+  user-select: none;
+}
 .sidebarItem {
   padding: 16px;
   border-radius: 9px;

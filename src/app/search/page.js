@@ -915,7 +915,7 @@ sources: ${JSON.stringify(item.sources)}`
             </div>
             {/* <h3 className="sidebarTitle">Your sessions:</h3> */}
             <h2 className="text-2xl font-medium text-white mb-6">Knowledge Search</h2>
-            <div className="sidebarItems">
+            <div className="sidebarItems no-scrollbar">
               {isWaitingSessions && (
                 <div className="sidebarLoader">
                   <l-ring
@@ -965,7 +965,7 @@ sources: ${JSON.stringify(item.sources)}`
 
 
           <div className={`chat ${isSidebarOpened ? '' : "chatSidebarClosed"}`}>
-            <div className="chatContent">
+            <div className="chatContent no-scrollbar">
               <h2 className="hidden text-2xl font-medium text-white mb-4">Knowledge Search</h2>
               <div className="bg-zinc-900/70 rounded-lg border border-zinc-800 relative">
                 <div className="p-4 md:p-6 border-b border-zinc-800">
@@ -1674,7 +1674,7 @@ export const Sources = ({ content = [], filters = {} }) => {
         {/* <GitBranch size={20} className="md:w-6 md:h-6" /> */}
         {/* <span>Sources</span> */}
       </div>
-      <div className="sourceItems">
+      <div className="sourceItems no-scrollbar">
         {Array.isArray(filteredSources) &&
           filteredSources.map((source, index) => {
             return (

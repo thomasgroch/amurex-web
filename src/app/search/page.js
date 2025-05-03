@@ -15,14 +15,19 @@ import StarButton from "@/components/star-button";
 import { useRouter } from "next/navigation";
 import MobileWarningBanner from "@/components/MobileWarningBanner";
 import "./search.css"
-import { ring } from 'ldrs'
 import Popup from "@/components/Popup/Popup";
 
 const BASE_URL_BACKEND = "https://api.amurex.ai";
 
 // 3. Home component
 export default function AISearch() {
-  ring.register()
+  // Initialize ldrs in a useEffect instead
+  useEffect(() => {
+    // Dynamically import ldrs only on the client side
+    import('ldrs').then(({ ring }) => {
+      ring.register();
+    });
+  }, []);
 
   // 4. Initialize states and refs
   const messagesEndRef = useRef(null);

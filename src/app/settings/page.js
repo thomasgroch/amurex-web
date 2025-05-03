@@ -344,7 +344,7 @@ function SettingsContent() {
           toast.success("Gmail connected successfully!");
           processGmailLabels();
           // Redirect to search page after Gmail connection
-          router.push("/emails");
+          router.push("/search");
         } else if (source === "notion") {
           console.log("Notion connection detected, importing documents");
           toast.success("Notion connected successfully!");
@@ -363,7 +363,7 @@ function SettingsContent() {
             console.log("Google connection detected, but no full access for Docs");
             toast.success("Google account connected successfully!");
             // Redirect to search page even without full access
-            router.push("/emails");
+            router.push("/search");
           }
         }
       });

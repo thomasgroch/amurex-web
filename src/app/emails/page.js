@@ -226,10 +226,10 @@ function EmailsContent() {
   };
 
   return (
-    <div className="flex min-h-screen bg-black">
+    <div className="min-h-screen bg-black">
       <MobileWarningBanner />
       {/* Main Content Area */}
-      <div className="flex flex-1 p-8 gap-8">
+      <div className="content p-8">
         {/* Left Column - Settings */}
         <div className={`${showPreview ? 'w-[60%]' : 'w-full'} transition-all duration-500`}>
           <div className="flex items-center justify-between mb-2">
@@ -244,7 +244,7 @@ function EmailsContent() {
           {/* Fake search bar */}
           <a href="/search" rel="noopener noreferrer">
             <div 
-              className="my-2 bg-zinc-800 rounded-xl flex items-center px-3 py-2 cursor-text hover:bg-zinc-700 transition-colors"
+              className="my-2 bg-zinc-800/80 rounded-xl flex items-center px-3 py-2 cursor-text hover:bg-zinc-700 transition-colors border border-white/10"
             >
               <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-zinc-400 mr-2">
                 <circle cx="11" cy="11" r="8"></circle>
@@ -253,9 +253,9 @@ function EmailsContent() {
               <div className="text-zinc-400 text-md">Search in emails...</div>
             </div>
           </a>
-          <div className="rounded-xl border text-card-foreground shadow bg-black border-zinc-800 mb-6">
+          <div className="rounded-xl border text-card-foreground shadow bg-black/80 border-white/10 mb-6">
             <div className="flex flex-col">
-              <div className="flex flex-row justify-between gap-2 border-b border-zinc-800 bg-zinc-800/50 rounded-t-xl">
+              <div className="flex flex-row justify-between gap-2 border-b border-white/10 bg-zinc-800/50 rounded-t-xl">
                 <div className="flex items-center gap-4 px-6 py-4">
                   <img
                     src={PROVIDER_ICONS.gmail}
@@ -263,7 +263,7 @@ function EmailsContent() {
                     className="hidden w-8"
                   />
                   <div>
-                    <h2 className="font-medium text-white text-lg">AI categorization</h2>
+                    <h2 className="font-medium text-white text-[14px]">Categorize emails with AI</h2>
                     {/* <p className="text-xs text-zinc-600 max-w-72">Auto-categorize emails with AI</p> */}
                   </div>
                   <div className="flex items-center gap-6">
@@ -280,7 +280,7 @@ function EmailsContent() {
                   <div className="flex items-center gap-2 mx-6">
                     <Button
                       variant="outline"
-                      className="font-normal bg-[#9334E9] text-white hover:bg-[#3c1671] hover:border-[#9334E9] border border-zinc-700 px-4 py-2"
+                      className="text-xs font-medium bg-[#3c1671] text-white hover:bg-[#3c1671] hover:border-[#6D28D9] border border-white/10 px-4 py-2"
                       onClick={processGmailLabels}
                       disabled={isProcessingEmails}
                     >
@@ -291,10 +291,10 @@ function EmailsContent() {
                         </>
                       ) : (
                         <div className="flex items-center">
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <svg xmlns="http://www.w3.org/2000/svg" className="w-3 mr-2" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                             <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.3"/>
                           </svg>
-                          Process new emails
+                          Categorize new emails
                         </div>
                       )}
                     </Button>
@@ -302,14 +302,14 @@ function EmailsContent() {
                     {processingComplete && (
                       <Button
                         variant="outline"
-                        className="font-normal bg-[#9334E9] text-white hover:bg-[#3c1671] hover:border-[#9334E9] border border-zinc-700 px-4 py-2"
+                        className="text-xs font-normal bg-[#3c1671] text-white hover:bg-[#3c1671] hover:border-[#6D28D9] border border-white/10 px-4 py-2"
                         onClick={() => window.open("https://mail.google.com", "_blank")}
                       >
                         <div className="flex items-center">
                           <img
                             src={PROVIDER_ICONS.gmail}
                             alt="Gmail"
-                            className="w-4 mr-2"
+                            className="w-3 mr-2"
                           />
                           Open Gmail
                         </div>
@@ -388,24 +388,24 @@ function EmailsContent() {
                       transition={{ duration: 0.5, ease: "easeInOut" }}
                     >
                       {/* Header */}
-                      <div className="hidden flex items-center justify-between px-6 py-4 border-b border-zinc-800">
+                      <div className="hidden flex items-center justify-between px-6 py-4 border-b border-white/10">
                         <h2 className="text-white">Label names</h2>
                         {/* <h2 className="text-white">Categories</h2> */}
                       </div>
 
                       {/* Category Items */}
-                      <div className="divide-y divide-zinc-800">
+                      <div className="divide-y divide-white/10">
                         {/* To respond */}
                         <motion.div 
-                          className="px-6 py-4 flex items-center justify-between"
+                          className="px-6 py-2 flex items-center justify-between"
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ duration: 0.3, delay: 0.1 }}
                         >
                           <div 
-                            className="h-7 w-7 flex items-center justify-center cursor-pointer rounded border border-zinc-800" 
+                            className={`h-7 w-7 flex items-center justify-center cursor-pointer rounded-lg border border-white/10 bg-zinc-900 ${categories.categories.to_respond ? '' : 'hover:border-[#6D28D9]'}`}
                             style={{ 
-                              backgroundColor: categories.categories.to_respond ? '#F87171' : 'transparent',
+                              backgroundColor: categories.categories.to_respond ? '#F87171' : '',
                             }}
                             onClick={() => handleCategoryToggle('to_respond', !categories.categories.to_respond)}
                           >
@@ -419,7 +419,7 @@ function EmailsContent() {
                             <span className="bg-[#F87171] text-black px-3 py-1 rounded text-sm font-medium">
                               To respond
                             </span>
-                            <span className="text-gray-400">
+                            <span className="text-gray-400 text-sm">
                               Awaiting your response
                             </span>
                           </div>
@@ -427,15 +427,15 @@ function EmailsContent() {
 
                         {/* FYI */}
                         <motion.div 
-                          className="px-6 py-4 flex items-center justify-between"
+                          className="px-6 py-2 flex items-center justify-between"
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ duration: 0.3, delay: 0.2 }}
                         >
                           <div 
-                            className="h-7 w-7 flex items-center justify-center cursor-pointer rounded border border-zinc-800" 
+                            className={`h-7 w-7 flex items-center justify-center cursor-pointer rounded-lg border border-white/10 bg-zinc-900 ${categories.categories.fyi ? '' : 'hover:border-[#6D28D9]'}`}
                             style={{ 
-                              backgroundColor: categories.categories.fyi ? '#F59E0B' : 'transparent',
+                              backgroundColor: categories.categories.fyi ? '#F59E0B' : '',
                             }}
                             onClick={() => handleCategoryToggle('fyi', !categories.categories.fyi)}
                           >
@@ -449,7 +449,7 @@ function EmailsContent() {
                             <span className="bg-[#F59E0B] text-black px-3 py-1 rounded text-sm font-medium">
                               FYI
                             </span>
-                            <span className="text-gray-400">
+                            <span className="text-gray-400 text-sm">
                               Information you might need to know
                             </span>
                           </div>
@@ -457,15 +457,15 @@ function EmailsContent() {
 
                         {/* Comment */}
                         <motion.div 
-                          className="px-6 py-4 flex items-center justify-between"
+                          className="px-6 py-2 flex items-center justify-between"
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ duration: 0.3, delay: 0.3 }}
                         >
                           <div 
-                            className="h-7 w-7 flex items-center justify-center cursor-pointer rounded border border-zinc-800" 
+                            className={`h-7 w-7 flex items-center justify-center cursor-pointer rounded-lg border border-white/10 bg-zinc-900 ${categories.categories.comment ? '' : 'hover:border-[#6D28D9]'}`}
                             style={{ 
-                              backgroundColor: categories.categories.comment ? '#F59E0B' : 'transparent',
+                              backgroundColor: categories.categories.comment ? '#F59E0B' : '',
                             }}
                             onClick={() => handleCategoryToggle('comment', !categories.categories.comment)}
                           >
@@ -479,7 +479,7 @@ function EmailsContent() {
                             <span className="bg-[#F59E0B] text-black px-3 py-1 rounded text-sm font-medium">
                               Comment
                             </span>
-                            <span className="text-gray-400">
+                            <span className="text-gray-400 text-sm">
                               Team comments (Google Docs, Microsoft Office, etc.)
                             </span>
                           </div>
@@ -487,15 +487,15 @@ function EmailsContent() {
 
                         {/* Notification */}
                         <motion.div 
-                          className="px-6 py-4 flex items-center justify-between"
+                          className="px-6 py-2 flex items-center justify-between"
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ duration: 0.3, delay: 0.4 }}
                         >
                           <div 
-                            className="h-7 w-7 flex items-center justify-center cursor-pointer rounded border border-zinc-800" 
+                            className={`h-7 w-7 flex items-center justify-center cursor-pointer rounded-lg border border-white/10 bg-zinc-900 ${categories.categories.notification ? '' : 'hover:border-[#6D28D9]'}`}
                             style={{ 
-                              backgroundColor: categories.categories.notification ? '#34D399' : 'transparent',
+                              backgroundColor: categories.categories.notification ? '#34D399' : '',
                             }}
                             onClick={() => handleCategoryToggle('notification', !categories.categories.notification)}
                           >
@@ -509,7 +509,7 @@ function EmailsContent() {
                             <span className="bg-[#34D399] text-black px-3 py-1 rounded text-sm font-medium">
                               Notification
                             </span>
-                            <span className="text-gray-400">
+                            <span className="text-gray-400 text-sm">
                               Automated updates from tools you use
                             </span>
                           </div>
@@ -517,15 +517,15 @@ function EmailsContent() {
 
                         {/* Meeting update */}
                         <motion.div 
-                          className="px-6 py-4 flex items-center justify-between"
+                          className="px-6 py-2 flex items-center justify-between"
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ duration: 0.3, delay: 0.5 }}
                         >
                           <div 
-                            className="h-7 w-7 flex items-center justify-center cursor-pointer rounded border border-zinc-800" 
+                            className={`h-7 w-7 flex items-center justify-center cursor-pointer rounded-lg border border-white/10 bg-zinc-900 ${categories.categories.meeting_update ? '' : 'hover:border-[#6D28D9]'}`}
                             style={{ 
-                              backgroundColor: categories.categories.meeting_update ? '#60A5FA' : 'transparent',
+                              backgroundColor: categories.categories.meeting_update ? '#60A5FA' : '',
                             }}
                             onClick={() => handleCategoryToggle('meeting_update', !categories.categories.meeting_update)}
                           >
@@ -539,7 +539,7 @@ function EmailsContent() {
                             <span className="bg-[#60A5FA] text-black px-3 py-1 rounded text-sm font-medium">
                               Meeting update
                             </span>
-                            <span className="text-gray-400">
+                            <span className="text-gray-400 text-sm">
                               Calendar updates from Zoom, Google Meet, etc.
                             </span>
                           </div>
@@ -547,15 +547,15 @@ function EmailsContent() {
 
                         {/* Awaiting reply */}
                         <motion.div 
-                          className="px-6 py-4 flex items-center justify-between"
+                          className="px-6 py-2 flex items-center justify-between"
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ duration: 0.3, delay: 0.6 }}
                         >
                           <div 
-                            className="h-7 w-7 flex items-center justify-center cursor-pointer rounded border border-zinc-800" 
+                            className={`h-7 w-7 flex items-center justify-center cursor-pointer rounded-lg border border-white/10 bg-zinc-900 ${categories.categories.awaiting_reply ? '' : 'hover:border-[#6D28D9]'}`}
                             style={{ 
-                              backgroundColor: categories.categories.awaiting_reply ? '#8B5CF6' : 'transparent',
+                              backgroundColor: categories.categories.awaiting_reply ? '#8B5CF6' : '',
                             }}
                             onClick={() => handleCategoryToggle('awaiting_reply', !categories.categories.awaiting_reply)}
                           >
@@ -569,7 +569,7 @@ function EmailsContent() {
                             <span className="bg-[#8B5CF6] text-white px-3 py-1 rounded text-sm font-medium">
                               Awaiting reply
                             </span>
-                            <span className="text-gray-400">
+                            <span className="text-gray-400 text-sm">
                               Sent emails awaiting a reply
                             </span>
                           </div>
@@ -577,15 +577,15 @@ function EmailsContent() {
 
                         {/* Actioned */}
                         <motion.div 
-                          className="px-6 py-4 flex items-center justify-between"
+                          className="px-6 py-2 flex items-center justify-between"
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           transition={{ duration: 0.3, delay: 0.7 }}
                         >
                           <div 
-                            className="h-7 w-7 flex items-center justify-center cursor-pointer rounded border border-zinc-800"
+                            className={`h-7 w-7 flex items-center justify-center cursor-pointer rounded-lg border border-white/10 bg-zinc-900 ${categories.categories.actioned ? '' : 'hover:border-[#6D28D9]'}`}
                             style={{ 
-                              backgroundColor: categories.categories.actioned ? '#8B5CF6' : 'transparent',
+                              backgroundColor: categories.categories.actioned ? '#8B5CF6' : '',
                             }}
                             onClick={() => handleCategoryToggle('actioned', !categories.categories.actioned)}
                           >
@@ -599,7 +599,7 @@ function EmailsContent() {
                             <span className="bg-[#8B5CF6] text-white px-3 py-1 rounded text-sm font-medium">
                               Actioned
                             </span>
-                            <span className="text-gray-400">
+                            <span className="text-gray-400 text-sm">
                               Sent emails not awaiting a reply
                             </span>
                           </div>
@@ -607,7 +607,7 @@ function EmailsContent() {
 
                         {/* Add custom category button */}
                         <motion.div 
-                          className="px-6 py-4 flex justify-center hidden"
+                          className="px-6 py-2 flex justify-center hidden"
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           transition={{ duration: 0.3, delay: 0.8 }}
@@ -628,10 +628,10 @@ function EmailsContent() {
                     transition={{ duration: 0.3, ease: "easeInOut" }}
                   >
                     <div className="relative">
-                      <div className="absolute -inset-0.5 bg-gradient-to-r from-[#9334E9] to-[#9334E9] rounded-lg blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-gradient-x"></div>
-                      <Card className="bg-black border-zinc-500 relative overflow-hidden w-full">
-                        <div className="absolute inset-0 bg-[#9334E9]/20 animate-pulse"></div>
-                        <div className="absolute inset-0 bg-gradient-to-r from-[#9334E9]/30 via-[#9334E9]/20 to-[#9334E9]/30"></div>
+                      <div className="absolute -inset-0.5 bg-gradient-to-r from-[#6D28D9] to-[#9334E9] rounded-lg blur opacity-75 group-hover:opacity-100 transition duration-1000 group-hover:duration-200 animate-gradient-x"></div>
+                      <Card className="bg-black border-white/10 relative overflow-hidden w-full">
+                        <div className="absolute inset-0 bg-[#3c1671]/20 animate-pulse"></div>
+                        <div className="absolute inset-0 bg-gradient-to-r from-[#3c1671]/30 via-[#6D28D9]/20 to-[#9334E9]/30"></div>
                         <CardContent className="p-4 relative text-center">
                           <div className="flex items-center gap-4 justify-center">
                             <Video className="w-6 h-6 text-[#9334E9] hidden" />
@@ -647,7 +647,7 @@ function EmailsContent() {
                           <div className="mt-4">
                             <a
                               href="/settings"
-                              className="inline-flex items-center px-4 py-2 rounded-md text-sm font-medium border border-white/10 bg-[#9334E9] text-[#FAFAFA] hover:bg-[#3c1671] hover:border-[#6D28D9] transition-colors duration-200"
+                              className="inline-flex items-center px-4 py-2 rounded-md text-xs font-medium border border-white/10 bg-[#3c1671] text-[#FAFAFA] hover:bg-[#3c1671] hover:border-[#6D28D9] transition-colors duration-200"
                             >
                               Connect Google account
                             </a>
@@ -677,8 +677,8 @@ function EmailsContent() {
               {/* Invisible spacer to match the header height */}
               <div className="h-[88px]"></div>
               
-              <div className="bg-zinc-900 rounded-xl border border-zinc-800 overflow-hidden h-fit">
-                <div className="bg-zinc-800 p-3 flex items-center justify-between">
+              <div className="bg-black/80 rounded-xl border border-white/10 overflow-hidden h-fit shadow-2xl">
+                <div className="bg-zinc-800/50 p-3 flex items-center justify-between border-b border-white/10">
                   <div className="flex items-center">
                     <h3 className="text-white font-medium">Inbox Preview</h3>
                   </div>
@@ -692,12 +692,12 @@ function EmailsContent() {
                   </div>
                 </div>
                 
-                <div className="divide-y divide-zinc-800">
+                <div className="divide-y divide-white/10">
                   {sampleEmails.map(email => {
                     return (
                       <div 
                         key={email.id} 
-                        className="p-3 hover:bg-zinc-800/50 cursor-pointer"
+                        className="p-3 hover:bg-white/5 cursor-pointer transition-colors"
                         onClick={() => handleEmailClick(email.sender)}
                       >
                         <div className="flex justify-between items-start">

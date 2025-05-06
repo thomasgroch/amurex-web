@@ -122,7 +122,6 @@ const SpotlightSearch = ({ isVisible, onClose, onSearch, suggestedPrompts = [], 
           />
           <div className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 flex items-center gap-2">
             <span className="text-xs">ESC to close</span>
-            <div className="px-1.5 py-0.5 bg-zinc-800 rounded text-[10px]">⌘K</div>
           </div>
         </form>
         
@@ -279,7 +278,7 @@ const SpotlightSearch = ({ isVisible, onClose, onSearch, suggestedPrompts = [], 
                   onMouseEnter={() => setSelectedSuggestion(idx)}
                   onMouseLeave={() => setSelectedSuggestion(-1)}
                 >
-                  <svg className="w-4 h-4 mr-2 text-zinc-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <svg className="h-4 w-4 min-w-4 flex-shrink-0 mr-2 text-zinc-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
                   {prompt.text}
@@ -406,10 +405,7 @@ export default function AISearch() {
       // Check for Cmd+K or Ctrl+K
       if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
         e.preventDefault();
-        // Reset current thread and thread ID before showing spotlight
-        setIsSearchInitiated(false);
-        setCurrentThread([]);
-        setCurrentThreadId("");
+        // Just show spotlight without resetting thread
         setShowSpotlight(true);
       }
     };
@@ -417,6 +413,22 @@ export default function AISearch() {
     window.addEventListener('keydown', handleHotkey);
     return () => window.removeEventListener('keydown', handleHotkey);
   }, []);
+
+  // Update SpotlightSearch component integration to handle new searches
+  const handleSpotlightSearch = (query) => {
+    setShowSpotlight(false);
+    setInputValue(query);
+    // Reset thread and start a new one
+    setCurrentThread([]);
+    setCurrentThreadId("");
+    setIsSearchInitiated(true);
+    sendMessage(query);
+  };
+
+  // Modify the button handler to use the same logic
+  const handleNewSearch = () => {
+    setShowSpotlight(true); // Show the spotlight search
+  };
 
   // Add auto-focus on input when typing - PLACED AFTER ALL STATE DECLARATIONS
   useEffect(() => {
@@ -715,6 +727,12 @@ export default function AISearch() {
     if (!session?.user?.id) return;
 
     const message = messageToSend || inputValue;
+
+    // Reset current thread if this is a new search from spotlight
+    if (showSpotlight) {
+      setCurrentThread([]);
+      setCurrentThreadId("");
+    }
 
     setCurrentThread(prev => [
       ...prev,
@@ -1235,10 +1253,7 @@ sources: ${JSON.stringify(item.sources)}`
         isVisible={showSpotlight} 
         onClose={() => setShowSpotlight(false)} 
         onSearch={(query) => {
-          setShowSpotlight(false);
-          setInputValue(query);
-          // Always start a new thread
-          sendMessage(query);
+          handleSpotlightSearch(query);
         }}
         suggestedPrompts={suggestedPrompts}
         sourceFilters={{
@@ -1255,12 +1270,7 @@ sources: ${JSON.stringify(item.sources)}`
       <div className="flex items-center justify-center gap-2">
         <button
           className={`fixed top-4 z-50 px-4 py-2 rounded-lg flex items-center justify-center gap-2 text-xs font-medium border border-white/10 bg-zinc-900 text-white transition-all duration-200 hover:border-[#6D28D9]`}
-          onClick={() => {
-            setIsSearchInitiated(false);
-            setCurrentThread([]);
-            setCurrentThreadId("");
-            setShowSpotlight(true); // Show the spotlight search
-          }}
+          onClick={handleNewSearch}
         >
           <img src="/plus.png" alt="New session" className="w-2 h-2 inline-block" />
           <span>New search</span>
@@ -1368,12 +1378,7 @@ sources: ${JSON.stringify(item.sources)}`
               )}
               {!!sidebarSessions.length && (
                 <>
-                  <div className="sidebarItem" onClick={() => {
-                    setIsSearchInitiated(false);
-                    setCurrentThread([]);
-                    setCurrentThreadId("");
-                    setShowSpotlight(true); // Show spotlight instead of just resetting
-                  }}>
+                  <div className="sidebarItem" onClick={handleNewSearch}>
                     <img src="/plus.png" alt="New session" className="w-3 h-3 mr-2 inline-block" />
                     <span>New search</span>
                     <span className="ml-2 px-1.5 py-0.5 bg-zinc-800 rounded text-[10px] text-zinc-400">⌘K</span>
@@ -1458,9 +1463,195 @@ sources: ${JSON.stringify(item.sources)}`
               
               {!isSearchInitiated ? (
                 <div className="h-full flex flex-col items-center justify-center">
-                  <div className="text-center max-w-md mx-auto mt-[-100px]">
-                    <h2 className="text-2xl font-medium text-white mb-3">Search your knowledge</h2>
-                    <p className="text-zinc-400 mb-6 text-md">Click on &quot;New search&quot; or press <kbd className="px-2 py-1 bg-zinc-800 rounded text-md text-zinc-300">⌘K</kbd> to begin</p>
+                  <div className="w-full max-w-2xl bg-black/80 border border-white/10 rounded-xl shadow-2xl overflow-hidden">
+                    <form onSubmit={(e) => {
+                      e.preventDefault();
+                      if (inputValue.trim()) {
+                        sendMessage(inputValue);
+                      }
+                    }} className="relative">
+                      <div className="absolute left-4 top-1/2 -translate-y-1/2 text-zinc-400">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="11" cy="11" r="8"></circle>
+                          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                        </svg>
+                      </div>
+                      <input
+                        type="text"
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        placeholder="Search your knowledge..."
+                        className="w-full py-4 px-12 bg-transparent text-white text-lg focus:outline-none"
+                        autoFocus
+                      />
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 text-zinc-400 flex items-center gap-2">
+                        <span className="text-xs">ESC to close</span>
+                      </div>
+                    </form>
+                    
+                    {/* Source selection buttons */}
+                    <div className="p-4 border-t border-white/10">
+                      <div className="text-xs text-zinc-500 mb-2">Search across</div>
+                      <div className="flex flex-wrap gap-2">
+                        {/* Google Docs button */}
+                        {hasGoogleDocs ? (
+                          <button
+                            onClick={() => setShowGoogleDocs(!showGoogleDocs)}
+                            className={`px-3 py-1.5 rounded-lg flex items-center justify-center gap-1.5 text-xs font-medium border border-white/10 ${showGoogleDocs
+                              ? "bg-[#3c1671] text-white border-[#6D28D9]"
+                              : "bg-zinc-900 text-white"
+                              } transition-all duration-200 hover:border-[#6D28D9]`}
+                          >
+                            <img
+                              src="https://upload.wikimedia.org/wikipedia/commons/0/01/Google_Docs_logo_%282014-2020%29.svg"
+                              alt="Google Docs"
+                              className="w-3.5 h-3.5"
+                            />
+                            <span>Docs</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={handleGoogleDocsClick}
+                            className="px-3 py-1.5 rounded-lg flex items-center justify-center gap-1.5 text-xs font-medium border border-white/10 bg-zinc-900 text-white hover:bg-[#3c1671] transition-all duration-200 relative group"
+                          >
+                            <img
+                              src="https://upload.wikimedia.org/wikipedia/commons/0/01/Google_Docs_logo_%282014-2020%29.svg"
+                              alt="Google Docs"
+                              className="w-3.5 h-3.5"
+                            />
+                            <span>Docs</span>
+                          </button>
+                        )}
+
+                        {/* Notion button */}
+                        {hasNotion ? (
+                          <button
+                            onClick={() => setShowNotion(!showNotion)}
+                            className={`px-3 py-1.5 rounded-lg flex items-center justify-center gap-1.5 text-xs font-medium border border-white/10 ${showNotion
+                              ? "bg-[#3c1671] text-white border-[#6D28D9]"
+                              : "bg-zinc-900 text-white"
+                              } transition-all duration-200 hover:border-[#6D28D9]`}
+                          >
+                            <img
+                              src="https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png"
+                              alt="Notion"
+                              className="w-3.5"
+                            />
+                            <span>Notion</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={handleNotionClick}
+                            className="px-3 py-1.5 rounded-lg flex items-center justify-center gap-1.5 text-xs font-medium border border-white/10 bg-zinc-900 text-white hover:bg-[#3c1671] transition-all duration-200 relative group"
+                          >
+                            <img
+                              src="https://upload.wikimedia.org/wikipedia/commons/4/45/Notion_app_logo.png"
+                              alt="Notion"
+                              className="w-3.5"
+                            />
+                            <span>Notion</span>
+                          </button>
+                        )}
+
+                        {/* Obsidian button */}
+                        {hasObsidian ? (
+                          <button
+                            onClick={() => setShowObsidian(!showObsidian)}
+                            className={`px-3 py-1.5 rounded-lg flex items-center justify-center gap-1.5 text-xs font-medium border border-white/10 ${showObsidian
+                              ? "bg-[#3c1671] text-white border-[#6D28D9]"
+                              : "bg-zinc-900 text-white"
+                              } transition-all duration-200 hover:border-[#6D28D9]`}
+                          >
+                            <img
+                              src="https://obsidian.md/images/obsidian-logo-gradient.svg"
+                              alt="Obsidian"
+                              className="w-3.5"
+                            />
+                            <span>Obsidian</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={handleObsidianClick}
+                            className="px-3 py-1.5 rounded-lg flex items-center justify-center gap-1.5 text-xs font-medium border border-white/10 bg-zinc-900 text-white hover:bg-[#3c1671] transition-all duration-200 relative group"
+                          >
+                            <img
+                              src="https://obsidian.md/images/obsidian-logo-gradient.svg"
+                              alt="Obsidian"
+                              className="w-3.5"
+                            />
+                            <span>Obsidian</span>
+                          </button>
+                        )}
+
+                        {/* Meetings button */}
+                        <button
+                          onClick={() => setShowMeetings(!showMeetings)}
+                          className={`px-3 py-1.5 rounded-lg flex items-center justify-center gap-1.5 text-xs font-medium border border-white/10 ${showMeetings && hasMeetings
+                            ? "bg-[#3c1671] text-white border-[#6D28D9]"
+                            : "bg-zinc-900 text-white"
+                            } transition-all duration-200 hover:border-[#6D28D9] ${!hasMeetings ? "opacity-50 cursor-not-allowed" : ""
+                            }`}
+                          disabled={!hasMeetings}
+                        >
+                          <ChatCenteredDots className="w-3.5 h-3.5" />
+                          <span>Meetings</span>
+                        </button>
+
+                        {/* Gmail button */}
+                        {hasGmail ? (
+                          <button
+                            onClick={() => setShowGmail(!showGmail)}
+                            className={`px-3 py-1.5 rounded-lg flex items-center justify-center gap-1.5 text-xs font-medium border border-white/10 ${showGmail
+                              ? "bg-[#3c1671] text-white border-[#6D28D9]"
+                              : "bg-zinc-900 text-white"
+                              } transition-all duration-200 hover:border-[#6D28D9]`}
+                          >
+                            <img
+                              src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Gmail_icon_%282020%29.svg/2560px-Gmail_icon_%282020%29.svg.png"
+                              alt="Gmail"
+                              className="w-3.5"
+                            />
+                            <span>Gmail</span>
+                          </button>
+                        ) : (
+                          <button
+                            onClick={handleGmailClick}
+                            className="px-3 py-1.5 rounded-lg flex items-center justify-center gap-1.5 text-xs font-medium border border-white/10 bg-zinc-900 text-white hover:bg-[#3c1671] transition-all duration-200 relative"
+                          >
+                            <img
+                              src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Gmail_icon_%282020%29.svg/2560px-Gmail_icon_%282020%29.svg.png"
+                              alt="Gmail"
+                              className="w-3.5"
+                            />
+                            <span>Gmail</span>
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    
+                    {/* Suggested prompts */}
+                    {suggestedPrompts.filter(item => item.type === "prompt").length > 0 && (
+                      <div className="p-3 border-t border-white/10">
+                        <div className="text-xs text-zinc-500 mb-2 px-2">Suggested searches</div>
+                        <div className="space-y-1">
+                          {suggestedPrompts.filter(item => item.type === "prompt").slice(0, 3).map((prompt, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => {
+                                setInputValue(prompt.text);
+                                sendMessage(prompt.text);
+                              }}
+                              className="w-full text-left px-3 py-2 text-zinc-300 rounded transition-colors text-sm flex items-center hover:bg-white/5"
+                            >
+                              <svg className="h-4 w-4 min-w-4 flex-shrink-0 mr-2 text-zinc-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                              </svg>
+                              {prompt.text}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (

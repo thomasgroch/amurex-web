@@ -316,26 +316,26 @@ async function storeEmailInDatabase(userId, messageId, threadId, sender, subject
     
   if (!existingEmail) {
     // Generate embeddings for the email content or at least the subject
-    let embedding = null;
-    let textToEmbed = "";
+    // let embedding = null;
+    // let textToEmbed = "";
     
-    if (content && content.trim() !== '') {
-      // Combine subject and content for better semantic representation
-      textToEmbed = `Subject: ${subject}\n\n${content}`;
-    } else if (subject && subject.trim() !== '') {
-      // If no content, at least embed the subject
-      textToEmbed = `Subject: ${subject}`;
-      console.log(`No content for email ${messageId}, embedding subject only`);
-    } else if (snippet && snippet.trim() !== '') {
-      // If no subject or content, try using the snippet
-      textToEmbed = snippet;
-      console.log(`No subject or content for email ${messageId}, embedding snippet only`);
-    }
+    // if (content && content.trim() !== '') {
+    //   // Combine subject and content for better semantic representation
+    //   textToEmbed = `Subject: ${subject}\n\n${content}`;
+    // } else if (subject && subject.trim() !== '') {
+    //   // If no content, at least embed the subject
+    //   textToEmbed = `Subject: ${subject}`;
+    //   console.log(`No content for email ${messageId}, embedding subject only`);
+    // } else if (snippet && snippet.trim() !== '') {
+    //   // If no subject or content, try using the snippet
+    //   textToEmbed = snippet;
+    //   console.log(`No subject or content for email ${messageId}, embedding snippet only`);
+    // }
     
-    // Only try to generate embeddings if we have some text
-    if (textToEmbed.trim() !== '') {
-      embedding = await generateEmbeddings(textToEmbed);
-    }
+    // // Only try to generate embeddings if we have some text
+    // if (textToEmbed.trim() !== '') {
+    //   embedding = await generateEmbeddings(textToEmbed);
+    // }
     
     // Insert email into database
     const emailData = {
@@ -351,18 +351,12 @@ async function storeEmailInDatabase(userId, messageId, threadId, sender, subject
       snippet: snippet,
     };
     
-    // Add embedding if available
-    if (embedding) {
-      emailData.embedding = embedding;
-    }
-    
     console.log(`Storing email in database:`, {
       message_id: messageId,
       thread_id: threadId,
       subject: subject,
       content_length: content ? content.length : 0,
-      has_embedding: embedding ? true : false,
-      embedded_text: textToEmbed ? (textToEmbed.length > 50 ? textToEmbed.substring(0, 50) + '...' : textToEmbed) : 'none'
+      has_embedding: false
     });
     
     const { error: insertError } = await adminSupabase

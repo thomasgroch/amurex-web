@@ -273,7 +273,10 @@ const SpotlightSearch = ({ isVisible, onClose, onSearch, suggestedPrompts = [], 
               {filteredPrompts.map((prompt, idx) => (
                 <button
                   key={idx}
-                  onClick={() => onSearch(prompt.text)}
+                  onClick={() => {
+                    setInputValue(prompt.text);
+                    // Don't immediately call onSearch here
+                  }}
                   className={`w-full text-left px-3 py-2 text-zinc-300 rounded transition-colors text-sm flex items-center ${selectedSuggestion === idx ? 'bg-white/10' : 'hover:bg-white/5'}`}
                   onMouseEnter={() => setSelectedSuggestion(idx)}
                   onMouseLeave={() => setSelectedSuggestion(-1)}
@@ -700,25 +703,35 @@ export default function AISearch() {
         }
 
         // Send the documents to the backend
-        const response = await fetch("/api/search", {
-          method: "POST",
-          body: JSON.stringify({
-            documents: data,
-            user_id: session.user.id,
-            type: "prompts", // Add type to differentiate the request
-          }),
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
+        // const apiResponse = await fetch("/api/search", {
+        //   method: "POST",
+        //   body: JSON.stringify({
+        //     documents: data,
+        //     user_id: session.user.id,
+        //     type: "prompts", // Add type to differentiate the request
+        //   }),
+        //   headers: {
+        //     "Content-Type": "application/json",
+        //   },
+        // });
+
+        // hardcoded prompts
+        const response = {
+          prompts: [
+            { type: 'prompt', text: 'What is the most important thing I need to do today?' },
+            { type: 'prompt', text: 'What was my last purchase?' },
+            { type: 'prompt', text: 'Draft an email to person X about ' }
+          ],
+          ok: true
+        }
 
         if (!response.ok) {
           console.error("Error generating prompts");
           return;
         }
 
-        const { prompts } = await response.json();
-        setSuggestedPrompts(prompts.prompts); // Access the nested prompts array
+        const { prompts } = response;
+        setSuggestedPrompts(prompts); // Access the nested prompts array
       });
   }, [session?.user?.id]);
 
@@ -1639,7 +1652,7 @@ sources: ${JSON.stringify(item.sources)}`
                               key={idx}
                               onClick={() => {
                                 setInputValue(prompt.text);
-                                sendMessage(prompt.text);
+                                // Don't immediately call sendMessage here
                               }}
                               className="w-full text-left px-3 py-2 text-zinc-300 rounded transition-colors text-sm flex items-center hover:bg-white/5"
                             >

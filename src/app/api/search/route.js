@@ -121,7 +121,13 @@ export async function POST(req) {
       const promptsStartTime = performance.now();
       const prompts = await generatePrompts(body.documents);
       console.log(`[${performance.now() - promptsStartTime}ms] Prompts generated`);
-      return Response.json({ prompts });
+      // hardcoded prompts
+      // return Response.json({ prompts: [
+      //   { type: 'prompt', text: 'What is the most important thing I need to do today?' },
+      //   { type: 'prompt', text: 'What was my last purchase?' },
+      //   { type: 'email', text: 'Draft an email to person X about...' }
+      // ] });
+      return Response.json({ apiPrompts: prompts });
     } catch (error) {
       console.error('Error generating prompts:', error);
       return Response.json({ error: 'Failed to generate prompts' }, { status: 500 });

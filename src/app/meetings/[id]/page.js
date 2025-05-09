@@ -731,7 +731,7 @@ export default function TranscriptDetail({ params }) {
                   <div 
                     className={`max-w-[80%] rounded-3xl text-md text-white`}
                   >
-                    Hey, I'm ready to help you with any questions you have about this meeting. What can I do for you?
+                    Hey, I&apos;m ready to help you with any questions you have about this meeting. What can I do for you?
                   </div>
                 </div>
 

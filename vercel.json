@@ -2,19 +2,19 @@
   "crons": [
     {
       "path": "/api/cron/google-import",
-      "schedule": "0 * * * *"
+      "schedule": "0 12 * * *"
     },
     {
       "path": "/api/cron/process-emails",
-      "schedule": "*/15 * * * *"
+      "schedule": "0 0 * * *"
     }
   ],
   "functions": {
     "api/cron/process-emails.js": {
-      "maxDuration": 800
+      "maxDuration": 60
     },
     "api/cron/google-import.js": {
-      "maxDuration": 800
+      "maxDuration": 60
     }
   }
-} 
+}

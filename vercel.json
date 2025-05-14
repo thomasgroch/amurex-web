@@ -10,10 +10,10 @@
     }
   ],
   "functions": {
-    "/api/cron/process-emails.js": {
+    "api/cron/process-emails.js": {
       "maxDuration": 60
     },
-    "/api/cron/google-import.js": {
+    "api/cron/google-import.js": {
       "maxDuration": 60
     }
   }

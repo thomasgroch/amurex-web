@@ -4,7 +4,7 @@ import { google } from "googleapis";
 
 // Configure Vercel Cron
 export const dynamic = 'force-dynamic';
-export const maxDuration = 800; // 13 minutes in seconds
+export const maxDuration = 60; // 1 minutes in seconds
 export const revalidate = 0;
 export const runtime = 'nodejs';
 
@@ -26,7 +26,7 @@ async function validateGoogleAccess(userId, refreshToken, clientsMap) {
       userData.client_secret,
       process.env.GOOGLE_REDIRECT_URI
     );
-    
+
     // Set credentials
     oauth2Client.setCredentials({
       refresh_token: refreshToken
@@ -34,24 +34,24 @@ async function validateGoogleAccess(userId, refreshToken, clientsMap) {
 
     // Create Drive API client
     const drive = google.drive({ version: 'v3', auth: oauth2Client });
-    
+
     // Make API calls that require the specific scopes we need:
     // 1. Try to list files (requires drive.readonly)
     await drive.files.list({
       pageSize: 1,
       fields: 'files(id, name)'
     });
-    
+
     // 2. Try to access docs (requires documents.readonly)
     const docs = google.docs({ version: 'v1', auth: oauth2Client });
-    
+
     // Get a list of docs first
     const filesList = await drive.files.list({
       pageSize: 1,
       q: "mimeType='application/vnd.google-apps.document'",
       fields: 'files(id)'
     });
-    
+
     // If we have at least one doc, try to access it
     if (filesList.data.files && filesList.data.files.length > 0) {
       const docId = filesList.data.files[0].id;
@@ -59,7 +59,7 @@ async function validateGoogleAccess(userId, refreshToken, clientsMap) {
         documentId: docId
       });
     }
-    
+
     console.log("Token validated successfully for user:", userId);
     // If we get here, the token is valid and has the required scopes
     return { valid: true };
@@ -68,25 +68,25 @@ async function validateGoogleAccess(userId, refreshToken, clientsMap) {
     const errorMessage = error.message || "";
     const errorCode = error.code || "";
     const status = error.status || (error.response && error.response.status);
-    
-    if (status === 401 || status === 403 || 
+
+    if (status === 401 || status === 403 ||
         errorMessage.includes("insufficient authentication") ||
         errorMessage.includes("invalid_grant") ||
         errorMessage.includes("invalid credentials") ||
         errorMessage.includes("insufficient permission") ||
         errorCode === "EAUTH") {
-      return { 
-        valid: false, 
-        reason: "insufficient_permissions", 
-        message: "User needs to reconnect their Google account with drive.readonly and documents.readonly permissions" 
+      return {
+        valid: false,
+        reason: "insufficient_permissions",
+        message: "User needs to reconnect their Google account with drive.readonly and documents.readonly permissions"
       };
     }
-    
+
     // For other types of errors (network, etc.), we'll still return invalid but with a different reason
-    return { 
-      valid: false, 
-      reason: "error", 
-      message: errorMessage || "Unknown error" 
+    return {
+      valid: false,
+      reason: "error",
+      message: errorMessage || "Unknown error"
     };
   }
 }
@@ -95,7 +95,7 @@ export async function GET(req) {
   try {
     // Verify the cron job secret using Authorization header
     const authHeader = req.headers.get('Authorization');
-    
+
     if (!authHeader || authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
@@ -133,24 +133,24 @@ export async function GET(req) {
 
     // Get unique cohort IDs from all users
     const cohortIds = [...new Set(users.map(user => user.google_cohort))].filter(id => id !== null);
-    
+
     // Fetch all client credentials in a single query
     const { data: clientsData, error: clientsError } = await supabase
       .from('google_clients')
       .select('id, client_id, client_secret')
       .in('id', cohortIds.length > 0 ? cohortIds : [0]); // Use a dummy ID if empty to avoid query error
-      
+
     if (clientsError) {
       console.error("Error fetching client credentials:", clientsError);
       throw new Error(`Failed to fetch client credentials: ${clientsError.message}`);
     }
-    
+
     // Create a map of client credentials by cohort ID for quick lookup
     const clientsMap = {};
     for (const client of clientsData) {
       clientsMap[client.id] = client;
     }
-    
+
     // Create a user map that includes client credentials
     const userClientMap = {};
     for (const user of users) {
@@ -166,11 +166,11 @@ export async function GET(req) {
     // Process each user's documents
     const results = [];
     let skipCount = 0;
-    
+
     for (const user of users) {
       try {
         console.log(`Processing documents for user ${user.id}`);
-        
+
         // Skip users without client credentials
         if (!userClientMap[user.id]) {
           console.log(`Skipping user ${user.id} - client credentials not found`);
@@ -183,14 +183,14 @@ export async function GET(req) {
           skipCount++;
           continue;
         }
-        
+
         // Validate access before processing
         const validation = await validateGoogleAccess(
-          user.id, 
-          user.google_refresh_token, 
+          user.id,
+          user.google_refresh_token,
           userClientMap
         );
-        
+
         if (!validation.valid) {
           console.log(`Skipping user ${user.id} - invalid token: ${validation.reason}`);
           results.push({
@@ -203,16 +203,16 @@ export async function GET(req) {
           skipCount++;
           continue;
         }
-        
+
         // If validation passed, proceed with document import
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_APP_URL}/api/google/import?userId=${user.id}`,
           { method: "GET" }
         );
-        
+
         const result = await response.json();
         console.log(`Result for user ${user.id}:`, result);
-        
+
         results.push({
           userId: user.id,
           success: result.success,
@@ -242,4 +242,4 @@ export async function GET(req) {
       { status: 500 }
     );
   }
-} 
+}

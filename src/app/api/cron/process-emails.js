@@ -10,7 +10,7 @@ const supabaseAdmin = createClient(
 
 // Configure Vercel Cron
 export const dynamic = 'force-dynamic';
-export const maxDuration = 100; // 1 minutes in seconds
+export const maxDuration = 60; // 1 minutes in seconds
 export const revalidate = 0;
 export const runtime = 'nodejs';
 

@@ -12,7 +12,7 @@ const groq = new OpenAI({
   baseURL: "https://api.groq.com/openai/v1",
 });
 
-export const maxDuration = 100;
+export const maxDuration = 60;
 export const dynamic = "force-dynamic";
 
 async function generateTags(text) {

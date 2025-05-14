@@ -12,7 +12,7 @@ const groq = new OpenAI({
   baseURL: "https://api.groq.com/openai/v1",
 });
 
-export const maxDuration = 300;
+export const maxDuration = 100;
 export const dynamic = "force-dynamic";
 
 async function generateTags(text) {
@@ -134,14 +134,14 @@ export async function POST(req) {
           }),
         }
       );
-      
+
       gmailResults = await gmailResponse.json();
       console.log("Gmail processing results:", gmailResults);
     } catch (gmailError) {
       console.error("Error processing Gmail:", gmailError);
-      gmailResults = { 
-        success: false, 
-        error: gmailError.message || "Failed to process Gmail" 
+      gmailResults = {
+        success: false,
+        error: gmailError.message || "Failed to process Gmail"
       };
     }
 
@@ -169,7 +169,7 @@ export async function GET(req) {
     // Get user ID from the URL query parameters
     const url = new URL(req.url);
     const userId = url.searchParams.get('userId');
-    
+
     if (!userId) {
       return NextResponse.json(
         { success: false, error: "User ID is required" },
@@ -220,14 +220,14 @@ export async function GET(req) {
           }),
         }
       );
-      
+
       gmailResults = await gmailResponse.json();
       console.log("Gmail processing results:", gmailResults);
     } catch (gmailError) {
       console.error("Error processing Gmail:", gmailError);
-      gmailResults = { 
-        success: false, 
-        error: gmailError.message || "Failed to process Gmail" 
+      gmailResults = {
+        success: false,
+        error: gmailError.message || "Failed to process Gmail"
       };
     }
 
@@ -257,7 +257,7 @@ async function processGoogleDocs(session, supabase, providedTokens = null) {
       process.env.NEXT_PUBLIC_SUPABASE_URL,
       process.env.SUPABASE_SERVICE_ROLE_KEY
     );
-    
+
     // If tokens are provided directly, use them
     let tokens;
     if (providedTokens && providedTokens.access_token) {
@@ -274,7 +274,7 @@ async function processGoogleDocs(session, supabase, providedTokens = null) {
         console.error("Google credentials not found:", userError);
         throw new Error("Google Docs not connected");
       }
-      
+
       tokens = {
         access_token: user.google_access_token,
         refresh_token: user.google_refresh_token,
@@ -332,7 +332,7 @@ async function processGoogleDocs(session, supabase, providedTokens = null) {
 
     // Print fetched results
     console.log("Fetched Google Docs:", JSON.stringify(response.data.files, null, 2));
-    
+
     // Commented out text splitter initialization
     /*
     const textSplitter = new RecursiveCharacterTextSplitter({
@@ -423,7 +423,7 @@ async function processGoogleDocs(session, supabase, providedTokens = null) {
 
         // Generate tags
         const tags = await generateTags(content);
-        
+
         // Commented out chunking and embedding generation
         /*
         const chunks = await textSplitter.createDocuments([content]);
@@ -504,7 +504,7 @@ async function processGoogleDocs(session, supabase, providedTokens = null) {
           })
         ).join(",")}]`;
         */
-        
+
         // Using empty arrays for chunks and embeddings
         const chunkTexts = [];
         const embeddings = [];

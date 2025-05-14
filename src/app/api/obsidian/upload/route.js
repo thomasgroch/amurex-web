@@ -15,7 +15,7 @@ const groq = new OpenAI({
   baseURL: "https://api.groq.com/openai/v1",
 });
 
-export const maxDuration = 100;
+export const maxDuration = 60;
 
 class TextSplitter {
   constructor({ chunkSize = 200, chunkOverlap = 50 } = {}) {

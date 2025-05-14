@@ -17,7 +17,7 @@ const adminSupabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-export const maxDuration = 100;
+export const maxDuration = 60;
 
 class TextSplitter {
   constructor({ chunkSize = 200, chunkOverlap = 50 } = {}) {

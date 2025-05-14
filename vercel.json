@@ -8,5 +8,13 @@
       "path": "/api/cron/process-emails",
       "schedule": "*/15 * * * *"
     }
-  ]
+  ],
+  "functions": {
+    "api/cron/process-emails/route.js": {
+      "maxDuration": 800
+    },
+    "api/cron/google-import/route.js": {
+      "maxDuration": 300
+    }
+  }
 } 
